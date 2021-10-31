@@ -35,7 +35,7 @@ class DBC:
 
         document = []
 
-        with open('%s/%s' % (DATA_PATH, 'cr-hospitalizace.json'), 'r') as file:
+        with open('%s/%s' % (DATA_PATH, 'cr-hospitalizace-umrti.json'), 'r') as file:
             json_data = json.load(file)
 
         for data in json_data['data']:

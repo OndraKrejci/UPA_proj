@@ -4,5 +4,6 @@
 /*.xml
 
 /data/
+/test/
 
 __pycache__/

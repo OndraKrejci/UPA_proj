@@ -1,31 +1,55 @@
 
+from typing import List
+
 import requests
 import os
 import sys
 
 DATA_PATH = 'data'
 
-DATA = [
-    {'name': 'osoby.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.json'},
-    {'name': 'vyleceni.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/vyleceni.json'},
-    {'name': 'umrti.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/umrti.json'},
-    {'name': 'hospitalizace.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/hospitalizace.json'},
-    {'name': 'nakazeni-vyleceni-umrti-testy.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/nakazeni-vyleceni-umrti-testy.json'},
+DATA: List[dict] = [
+    # KRAJ, OKRES, ORP, OBEC
+    # absolutne a prirustkove: nakazeni; nakazeni 65+, nakazeni za tyden a 14 dni
+    {'name': 'obce-nakazeni.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/obce.json', 'large': True},
+
+    # KRAJ, OKRES
+    # nakaza jednotlivych osob - vek, datum
+    {'name': 'kraj-okres-nakazeni.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.json'},
+    # vyleceni jednotlivych osob - vek, datum
+    {'name': 'kraj-okres-vyleceni.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/vyleceni.json'},
+    # umrti jednotlivych osob - vek, datum
+    {'name': 'kraj-okres-umrti.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/umrti.json'},
+    # kumulativne: nakaza, vyleceni, umrti - datum
     {'name': 'kraj-okres-nakazeni-vyleceni-umrti.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/kraj-okres-nakazeni-vyleceni-umrti.json'},
-    {'name': 'incidence-7-14-kraje.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/incidence-7-14-kraje.json'},
-    {'name': 'zemreli-cr.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
-    {'name': 'obyvatelstvo-kraj-okres.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
+    # kumulativne a prirustkove: testy (dohromady, zaznamy pro kraj i okres)
+    {'name': 'kraj-okres-testy.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/kraj-okres-testy.json'},
+
+    # CZE
+    # absolutne a kumulativne: hospitalizace a umrti - datum; detaily k hospitalizaci
+    {'name': 'cr-hospitalizace-umrti.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/hospitalizace.json'},
+    # kumulativne a prirustkove: nakaza, vyleceni, umrti, testy (oddelene AG, PCR) - datum
+    {'name': 'cr-nakazeni-vyleceni-umrti-testy.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/nakazeni-vyleceni-umrti-testy.json'},
+    # prirustkove: testy (oddelene AG, PCR) - datum; dalsi udaje o testech, pozitivni testy...
+    {'name': 'cr-testy.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/testy-pcr-antigenni.json'},
+
+    # ORP
+    # absolutne: nakazeni a hospitalizovani (vsichni, 65+, 75+) - den; nakazeni, hospitalizovani, testy - tyden
+    {'name': 'orp-nakazeni-hospitalizovani.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.json'},
+
+    # TODO
+    {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
+    {'name': 'kraj-okres-obyvatelstvo.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
 ]
 
 def ensure_folder(path: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-def download(url: str, name: str, rewrite: bool = False, log: bool = True) -> None:
+def download(url: str, name: str, large: bool = False, rewrite: bool = False, log: bool = True, skipLarge: bool = False) -> None:
     path = '%s/%s' % (DATA_PATH, name)
 
-    if not rewrite and os.path.isfile(path):
+    if not rewrite and os.path.isfile(path) or large and skipLarge:
         if log:
-            print('Skipping: %s' % name)
+            print('Skipped: %s' % name)
         return
 
     data = requests.get(url, allow_redirects=True)
@@ -41,11 +65,11 @@ def download(url: str, name: str, rewrite: bool = False, log: bool = True) -> No
     if log:
         print('Downloaded: %s' % name)
 
-def download_data(rewrite: bool = False, log: bool = True):
+def download_data(rewrite: bool = False, log: bool = True, skipLarge = False):
     ensure_folder(DATA_PATH + '/')
 
     for data in DATA:
-        download(data['url'], data['name'], rewrite, log)
+        download(data['url'], data['name'], data.get('large', False), rewrite, log, skipLarge)
 
 if __name__ == '__main__':
     download_data()
