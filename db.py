@@ -268,7 +268,7 @@ class DBC:
         with open('%s/%s' % (DATA_PATH, 'orp-nakazeni-hospitalizovani.json'), 'r', encoding='utf-8') as file:
             datalist = json.load(file)['data']
 
-        datalist = sorted(datalist, key=lambda item: (item['datum'], item['orp_kod']))
+        datalist = sorted(datalist, key=lambda item: (item['orp_kod'], item['datum']))
 
         incidence = None
         orp_kod = None
@@ -278,17 +278,16 @@ class DBC:
             elif data['orp_nazev'] == 'Praha':
                 data['orp_kod'] = 1000
 
-            if orp_kod is not None and orp_kod != data['orp_kod']:
+            if orp_kod != data['orp_kod']:
                 incidence = None
                 orp_kod = data['orp_kod']
             
             if incidence is not None:
-                incidence = max(incidence - data['incidence_7'], 0)
+                incidence = max(data['incidence_7'] - incidence, 0)
 
-            #document.append(self.create_record_nakazeni_hospitalizovani_orp(data, incidence))
+            data['incidence'] = incidence
 
-            if incidence is None:
-                incidence = data['incidence_7']
+            incidence = data['incidence_7']
         
         with open('%s/%s' % (DATA_PATH, 'orp-ockovani-geografie.json'), 'r', encoding='utf-8') as file:
             ockovani = json.load(file)['data']
@@ -342,7 +341,7 @@ class DBC:
             'incidence_7': data.get('incidence_7', 0),
             'incidence_65_7': data.get('incidence_65_7', 0),
             'incidence_75_7': data.get('incidence_75_7', 0),
-            """'incidence': incidence, # nove pripady nakazy"""
+            'incidence_diff': data['incidence'],
             'prevalence': data.get('prevalence', 0), # aktivni pripady nakazy
             'prevalence_65': data.get('prevalence_65', 0),
             'prevalence_75': data.get('prevalence_75', 0),
