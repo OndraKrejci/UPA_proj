@@ -260,6 +260,55 @@ class DBC:
             'prirustkovy_pocet_testu': data.get('prirustkovy_pocet_testu_kraj', 0),
         }
 
+    def create_collection_nakazeni_hospitalizovani_orp(self) -> None:
+        coll = self.get_collection('nakazeni_hospitalizovani_orp')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'orp-nakazeni-hospitalizovani.json'), 'r', encoding='utf-8') as file:
+            datalist = json.load(file)['data']
+
+        datalist = sorted(datalist, key=lambda item: (item['datum'], item['orp_kod']))
+
+        incidence = None
+        orp_kod = None
+        for data in datalist:
+            if data['orp_nazev'] == 'Brandýs n.L.- St.Boleslav':
+                data['orp_nazev'] = 'Brandýs nad Labem-Stará Boleslav'
+            elif data['orp_nazev'] == 'Praha':
+                data['orp_kod'] = 1000
+
+            if orp_kod is not None and orp_kod != data['orp_kod']:
+                incidence = None
+                orp_kod = data['orp_kod']
+            
+            if incidence is not None:
+                incidence = max(incidence - data['incidence_7'], 0)
+
+            document.append(self.create_record_nakazeni_hospitalizovani_orp(data, incidence))
+
+            if incidence is None:
+                incidence = data['incidence_7']
+
+        coll.insert_many(document)
+
+    def create_record_nakazeni_hospitalizovani_orp(self, data: dict, incidence: int) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'orp_kod': data.get('orp_kod', 0),
+            'orp_nazev': data.get('orp_nazev', ''),
+            'incidence_7': data.get('incidence_7', 0),
+            'incidence_65_7': data.get('incidence_65_7', 0),
+            'incidence_75_7': data.get('incidence_75_7', 0),
+            'incidence': incidence, # nove pripady nakazy
+            'prevalence': data.get('prevalence', 0), # aktivni pripady nakazy
+            'prevalence_65': data.get('prevalence_65', 0),
+            'prevalence_75': data.get('prevalence_75', 0),
+            'aktualni_pocet_hospitalizovanych_osob': data.get('aktualni_pocet_hospitalizovanych_osob', 0),
+            'nove_hosp_7': data.get('nove_hosp_7', 0),
+            'testy_7': data.get('testy_7', 0) # PCR
+        }
+
 if __name__ == '__main__':
     dbc = DBC()
     dbc.delete_db()
@@ -268,3 +317,4 @@ if __name__ == '__main__':
     dbc.create_collection_covid_po_dnech_cr()
     dbc.create_collection_nakazeni_vek_okres_kraj()
     dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
+    dbc.create_collection_nakazeni_hospitalizovani_orp()
