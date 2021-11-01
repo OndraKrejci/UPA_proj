@@ -285,14 +285,56 @@ class DBC:
             if incidence is not None:
                 incidence = max(incidence - data['incidence_7'], 0)
 
-            document.append(self.create_record_nakazeni_hospitalizovani_orp(data, incidence))
+            #document.append(self.create_record_nakazeni_hospitalizovani_orp(data, incidence))
 
             if incidence is None:
                 incidence = data['incidence_7']
+        
+        with open('%s/%s' % (DATA_PATH, 'orp-ockovani-geografie.json'), 'r', encoding='utf-8') as file:
+            ockovani = json.load(file)['data']
+            
+        ockovani = [i for i in ockovani if i['orp_bydliste_kod']]
+        
+        ockovani = sorted(ockovani, key=lambda x: (x['datum'], x['orp_bydliste_kod']))
+        
+        datum = ockovani[0].get('datum')
+        orp = ockovani[0].get('orp_bydliste_kod')
+        kraj = ockovani[0].get('kraj_nazev')
+        nuts = ockovani[0].get('kraj_nuts_kod')
+        pocet = 0
+        ockovani_merged = []
+        for data in ockovani:
+            if data.get('datum') != datum or data.get('orp_bydliste_kod') != kraj:
+                ockovani_merged.append({
+                    "datum": datum,
+                    "kraj_nuts_kod": nuts,
+                    "kraj_nazev": kraj,
+                    "orp_kod": orp,
+                    "pocet_davek": pocet
+                })
+                datum = data.get('datum')
+                orp = data.get('orp_bydliste_kod')
+                kraj = data.get('kraj_nazev')
+                nuts = data.get('kraj_nuts_kod')
+                pocet = data.get('pocet_davek')
+            else:
+                pocet += data.get('pocet_davek')
+        ockovani_merged.append({
+                    "datum": datum,
+                    "kraj_nuts_kod": nuts,
+                    "kraj_nazev": kraj,
+                    "orp_kod": orp,
+                    "pocet_davek": pocet
+                })
+        
+        l = [{**i1, **i2} for i1, i2 in mergeListsByTwoKeys(datalist, ockovani_merged, key1="datum", key2="orp_kod")]
+        
+        for data in l:
+            document.append(self.create_record_nakazeni_hospitalizovani_orp(data))
 
         coll.insert_many(document)
 
-    def create_record_nakazeni_hospitalizovani_orp(self, data: dict, incidence: int) -> dict:
+    def create_record_nakazeni_hospitalizovani_orp(self, data: dict) -> dict:
         return {
             'datum': DateParser.parse(data['datum']),
             'orp_kod': data.get('orp_kod', 0),
@@ -300,13 +342,16 @@ class DBC:
             'incidence_7': data.get('incidence_7', 0),
             'incidence_65_7': data.get('incidence_65_7', 0),
             'incidence_75_7': data.get('incidence_75_7', 0),
-            'incidence': incidence, # nove pripady nakazy
+            """'incidence': incidence, # nove pripady nakazy"""
             'prevalence': data.get('prevalence', 0), # aktivni pripady nakazy
             'prevalence_65': data.get('prevalence_65', 0),
             'prevalence_75': data.get('prevalence_75', 0),
             'aktualni_pocet_hospitalizovanych_osob': data.get('aktualni_pocet_hospitalizovanych_osob', 0),
             'nove_hosp_7': data.get('nove_hosp_7', 0),
-            'testy_7': data.get('testy_7', 0) # PCR
+            'testy_7': data.get('testy_7', 0), # PCR
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
+            'kraj_nazev': data.get('kraj_nazev', 0),
+            'pocet_davek': data.get('pocet_davek', 0)
         }
 
 if __name__ == '__main__':
