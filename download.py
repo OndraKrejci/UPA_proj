@@ -35,6 +35,12 @@ DATA: List[dict] = [
     # ORP
     # absolutne: nakazeni a hospitalizovani (vsichni, 65+, 75+) - den; nakazeni, hospitalizovani, testy - tyden
     {'name': 'orp-nakazeni-hospitalizovani.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.json'},
+    # absolutne: ockovani podle bydliste (ORP) a typu vakciny - den
+    {'name': 'orp-ockovani-geografie.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovani-geografie.json'},
+
+    # KRAJ
+    # absolutne: ockovani podle veku a typu vakciny - den
+    {'name': 'kraj-ockovani.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovani.json'},
 
     # TODO
     {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
@@ -49,7 +55,7 @@ def download(url: str, name: str, large: bool = False, rewrite: bool = False, lo
 
     if not rewrite and os.path.isfile(path) or large and skipLarge:
         if log:
-            print('Skipped: %s' % name)
+            print('Skipped:\t%s' % name)
         return
 
     data = requests.get(url, allow_redirects=True)
@@ -63,7 +69,7 @@ def download(url: str, name: str, large: bool = False, rewrite: bool = False, lo
     file.close()
 
     if log:
-        print('Downloaded: %s' % name)
+        print('Downloaded:\t%s' % name)
 
 def download_data(rewrite: bool = False, log: bool = True, skipLarge = False):
     ensure_folder(DATA_PATH + '/')
