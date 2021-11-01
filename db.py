@@ -114,7 +114,6 @@ class DBC:
             document.append(self.create_record_covid_po_dnech_cr(data))
 
         coll.insert_many(document)
-        print(document)
     
     def create_record_covid_po_dnech_cr(self, data: OrderedDict) -> dict:
         return {
