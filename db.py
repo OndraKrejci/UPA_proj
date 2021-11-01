@@ -157,6 +157,31 @@ class DBC:
             'umrti': data.get('umrti', 0),
             'upv': data.get('upv', 0),
         }
+        
+    def create_collection_nakazeni_vek_okres_kraj(self) -> None:
+        coll = self.get_collection('nakazeni_vek_okres_kraj')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'kraj-okres-nakazeni.json'), 'r') as file:
+            json_data = json.load(file)['data']
+        
+
+        for data in json_data:
+            document.append(self.create_record_nakazeni_vek_okres_kraj(data))
+
+        coll.insert_many(document)
+    
+    def create_record_nakazeni_vek_okres_kraj(self, data: OrderedDict) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'vek': data.get('vek', 0),
+            'pohlavy': data.get('pohlavy', 0),
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
+            'okres_lau_kod': data.get('okres_lau_kod', 0),
+            'nakaza_v_zahranici': data.get('nakaza_v_zahranici', 0),
+            'nakaza_zeme_csu_kod': data.get('nakaza_zeme_csu_kod', 0),
+        }
 
 if __name__ == '__main__':
     dbc = DBC()
@@ -164,3 +189,4 @@ if __name__ == '__main__':
     dbc.create_collection_hosptializace_cr()
     dbc.create_collection_obyvatelstvo()
     dbc.create_collection_covid_po_dnech_cr()
+    dbc.create_collection_nakazeni_vek_okres_kraj()
