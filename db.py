@@ -9,7 +9,7 @@ from download import DATA_PATH
 
 from collections import OrderedDict
 
-from merge import mergeListsByKey
+from merge import mergeListsByKey, mergeListsByTwoKeys
 
 class DBC:
     DB_NAME = 'covid'
@@ -181,6 +181,84 @@ class DBC:
             'nakaza_v_zahranici': data.get('nakaza_v_zahranici', 0),
             'nakaza_zeme_csu_kod': data.get('nakaza_zeme_csu_kod', 0),
         }
+        
+    def create_collection_nakazeni_vyleceni_umrti_testy_kraj(self) -> None:
+        coll = self.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
+        
+        document = []
+        
+        with open('%s/%s' % (DATA_PATH, 'kraj-okres-testy.json'), 'r') as file:
+            testy = json.load(file)['data']
+        
+        testy = sorted(testy, key=lambda x: (x['datum'], x['kraj_nuts_kod']))
+        
+        datum = ''
+        kraj = ''
+        testy_merged = []
+        for data in testy:
+            if data.get('datum') != datum or data.get('kraj_nuts_kod') != kraj:
+                testy_merged.append(data)
+                datum = data.get('datum')
+                kraj = data.get('kraj_nuts_kod')
+        
+        with open('%s/%s' % (DATA_PATH, 'kraj-okres-nakazeni-vyleceni-umrti.json'), 'r') as file:
+            nakazeni_vyleceni_umrti = json.load(file)['data']
+            
+        nakazeni_vyleceni_umrti = [i for i in nakazeni_vyleceni_umrti if i['kraj_nuts_kod']]
+        
+        nakazeni_vyleceni_umrti = sorted(nakazeni_vyleceni_umrti, key=lambda x: (x['datum'], x['kraj_nuts_kod']))
+        
+        datum = nakazeni_vyleceni_umrti[0].get('datum')
+        kraj = nakazeni_vyleceni_umrti[0].get('kraj_nuts_kod')
+        nakazeni = 0
+        vyleceni = 0
+        umrti = 0
+        nakazeni_vyleceni_umrti_merged = []
+        for data in nakazeni_vyleceni_umrti:
+            if data.get('datum') != datum or data.get('kraj_nuts_kod') != kraj:
+                nakazeni_vyleceni_umrti_merged.append({
+                    "datum": datum,
+                    "kraj_nuts_kod": kraj,
+                    "kumulativni_pocet_nakazenych": nakazeni,
+                    "kumulativni_pocet_vylecenych": vyleceni,
+                    "kumulativni_pocet_umrti": umrti
+                })
+                datum = data.get('datum')
+                kraj = data.get('kraj_nuts_kod')
+                nakazeni = data.get('kumulativni_pocet_nakazenych')
+                vyleceni = data.get('kumulativni_pocet_vylecenych')
+                umrti = data.get('kumulativni_pocet_umrti')
+            else:
+                nakazeni += data.get('kumulativni_pocet_nakazenych')
+                vyleceni += data.get('kumulativni_pocet_vylecenych')
+                umrti += data.get('kumulativni_pocet_umrti')
+        nakazeni_vyleceni_umrti_merged.append({
+                    "datum": datum,
+                    "kraj_nuts_kod": kraj,
+                    "kumulativni_pocet_nakazenych": nakazeni,
+                    "kumulativni_pocet_vylecenych": vyleceni,
+                    "kumulativni_pocet_umrti": umrti
+                })
+        
+        l = [{**i1, **i2} for i1, i2 in mergeListsByTwoKeys(testy_merged, nakazeni_vyleceni_umrti_merged, key1="datum", key2="kraj_nuts_kod")]
+        
+        for data in l:
+            document.append(self.create_record_nakazeni_vyleceni_umrti_testy_kraj(data))
+
+        coll.insert_many(document)
+        
+    def create_record_nakazeni_vyleceni_umrti_testy_kraj(self, data: OrderedDict) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
+            'kumulativni_pocet_nakazenych': data.get('kumulativni_pocet_nakazenych', 0),
+            'kumulativni_pocet_umrti': data.get('kumulativni_pocet_umrti', 0),
+            'kumulativni_pocet_vylecenych': data.get('kumulativni_pocet_vylecenych', 0),
+            'kumulativni_pocet_prvnich_testu': data.get('kumulativni_pocet_prvnich_testu_kraj', 0),
+            'kumulativni_pocet_testu': data.get('kumulativni_pocet_testu_kraj', 0),
+            'prirustkovy_pocet_prvnich_testu': data.get('prirustkovy_pocet_prvnich_testu_kraj', 0),
+            'prirustkovy_pocet_testu': data.get('prirustkovy_pocet_testu_kraj', 0),
+        }
 
 if __name__ == '__main__':
     dbc = DBC()
@@ -189,3 +267,4 @@ if __name__ == '__main__':
     dbc.create_collection_obyvatelstvo()
     dbc.create_collection_covid_po_dnech_cr()
     dbc.create_collection_nakazeni_vek_okres_kraj()
+    dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
