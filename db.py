@@ -6,7 +6,7 @@ import csv
 from dateutil import parser as DateParser
 
 from download import DATA_PATH
-from ciselniky import UZEMI_KRAJ
+from ciselniky import UZEMI_KRAJ, Kraje
 
 from collections import OrderedDict
 
@@ -38,27 +38,37 @@ class DBC:
     def create_collection_obyvatelstvo_kraj(self) -> None:
         coll = self.get_collection('obyvatelstvo_kraj')
 
+        kraje = Kraje()
+
+        min_datum = DateParser.parse('2018-01-01')
         document = []
 
         with open('%s/%s' % (DATA_PATH, 'kraj-okres-obyvatelstvo.csv'), 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
 
             for data in reader:
+                casref_do = DateParser.parse(data['casref_do'])
                 vuzemi_cis = int(data['vuzemi_cis']) if data['vuzemi_cis'] else None
-                if vuzemi_cis == UZEMI_KRAJ:
-                    document.append(self.create_record_obyvatelstvo_kraj(data))
+                if vuzemi_cis == UZEMI_KRAJ and casref_do > min_datum:
+                    try:
+                        kod = int(data['vuzemi_kod'])
+                    except:
+                        kod = ''
+                    nuts = kraje.get_nuts(kod)
+                    document.append(self.create_record_obyvatelstvo_kraj(data, casref_do, kod, nuts))
 
         coll.insert_many(document)
 
-    def create_record_obyvatelstvo_kraj(self, data: OrderedDict) -> dict:
+    def create_record_obyvatelstvo_kraj(self, data: OrderedDict, casref_do, kod, nuts) -> dict:
         return {
             'pocet': int(data['hodnota']) if data['hodnota'] else None,
-            'pohlavi_kod': int(data['pohlavi_kod']) if data['pohlavi_kod'] else None, # 1=muz, 2=zena
+            'pohlavi_kod': int(data['pohlavi_kod']) if data['pohlavi_kod'] else '', # 1=muz, 2=zena
             'vek_kod': data['vek_kod'], # CSU7700
             'vek_txt': data['vek_txt'],
-            'kraj_kod': data['vuzemi_kod'],
-            'kraj_nazev': data['vuzemi_txt'],
-            'casref_do': DateParser.parse(data['casref_do'])
+            'kod': kod,
+            'nuts_kod': nuts,
+            'nazev': data['vuzemi_txt'],
+            'casref_do': casref_do
         }
 
     def create_collection_covid_po_dnech_cr(self) -> None:
@@ -467,7 +477,6 @@ class DBC:
             'aktualni_pocet_hospitalizovanych_osob': data.get('aktualni_pocet_hospitalizovanych_osob', 0),
             'nove_hosp_7': data.get('nove_hosp_7', 0),
             'testy_7': data.get('testy_7', 0),
-
         }
 
     def create_collection_obyvatelia_orp(self) -> None:
