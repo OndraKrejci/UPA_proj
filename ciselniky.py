@@ -41,7 +41,7 @@ UZEMI_REPUBLIKA = 97
 
 class ORP:
     def __init__(self) -> None:
-        self.nazvy, self.zkracene = ORP.get_orp_nazvy()
+        self.nazvy, self.zkracene, self.orp = ORP.get_orp_dicts()
 
     @staticmethod
     def load_orp_zkracene() -> dict:
@@ -98,7 +98,7 @@ class ORP:
             return orp_data
 
     @staticmethod
-    def get_orp_nazvy() -> Tuple[dict, dict]:
+    def get_orp_dicts() -> Tuple[dict, dict, dict]:
         orp_kraj_vazba = ORP.create_orp_kraje_vazba_json()
 
         nazvy = {}
@@ -107,7 +107,7 @@ class ORP:
             nazvy[data['nazev']] = orp_kod
             zkracene[data['zkraceny_nazev']] = orp_kod
 
-        return (nazvy, zkracene)
+        return (nazvy, zkracene, orp_kraj_vazba)
 
     def get_orp_kod(self, nazev: str) -> Union[int, None]:
         if nazev in self.nazvy:
@@ -115,6 +115,12 @@ class ORP:
         elif nazev in self.zkracene:
             return self.zkracene[nazev]
 
+        return None
+
+    def get_orp_nazev(self, kod: int) -> Union[str, None]:
+        if kod in self.orp:
+            return self.orp[kod]['nazev']
+        
         return None
 
 class Kraje:
