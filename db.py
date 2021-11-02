@@ -33,39 +33,6 @@ class DBC:
 
         return coll
 
-    def create_collection_hosptializace_cr(self) -> None:
-        coll = self.get_collection('hospitalizace_cr')
-
-        document = []
-
-        with open('%s/%s' % (DATA_PATH, 'cr-hospitalizace-umrti.json'), 'r') as file:
-            json_data = json.load(file)
-
-        for data in json_data['data']:
-            document.append(self.create_record_hospitalizace_cr(data))
-
-        coll.insert_many(document)
-
-    def create_record_hospitalizace_cr(self, data: dict) -> dict:
-        return {
-            'datum': DateParser.parse(data['datum']),
-            'pacient_prvni_zaznam': data.get('pacient_prvni_zaznam', 0),
-            'kum_pacient_prvni_zaznam': data.get('kum_pacient_prvni_zaznam', 0),
-            'pocet_hosp': data.get('pocet_hosp', 0),
-            'stav_bez_priznaku': data.get('stav_bez_priznaku', 0),
-            'stav_lehky': data.get('stav_lehky', 0),
-            'stav_stredni': data.get('stav_stredni', 0),
-            'stav_tezky': data.get('stav_tezky', 0),
-            'jip': data.get('jip', 0),
-            'kyslik': data.get('kyslik', 0),
-            'hfno': data.get('hfno', 0),
-            'upv': data.get('upv', 0),
-            'ecmo': data.get('ecmo', 0),
-            'tezky_upv_ecmo': data.get('tezky_upv_ecmo', 0),
-            'umrti': data.get('umrti', 0),
-            'kum_umrti': data.get('kum_umrti', 0)
-        }
-
     def create_collection_obyvatelstvo_kraj(self) -> None:
         coll = self.get_collection('obyvatelstvo_kraj')
 
@@ -387,7 +354,6 @@ class DBC:
 
     def create_all_collections() -> None:
         dbc.delete_db()
-        dbc.create_collection_hosptializace_cr()
         dbc.create_collection_obyvatelstvo_kraj()
         dbc.create_collection_covid_po_dnech_cr()
         dbc.create_collection_nakazeni_vek_okres_kraj()
