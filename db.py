@@ -227,34 +227,10 @@ class DBC:
             'prirustkovy_pocet_testu': data.get('prirustkovy_pocet_testu_kraj', 0),
         }
 
-    def create_collection_nakazeni_hospitalizovani_orp(self) -> None:
-        coll = self.get_collection('nakazeni_hospitalizovani_orp')
+    def create_collection_ockovani_orp(self) -> None:
+        coll = self.get_collection('ockovani_orp')
 
         document = []
-
-        with open('%s/%s' % (DATA_PATH, 'orp-nakazeni-hospitalizovani.json'), 'r', encoding='utf-8') as file:
-            datalist = json.load(file)['data']
-
-        datalist = sorted(datalist, key=lambda item: (item['orp_kod'], item['datum']))
-
-        incidence = None
-        orp_kod = None
-        for data in datalist:
-            if data['orp_nazev'] == 'Brandýs n.L.- St.Boleslav':
-                data['orp_nazev'] = 'Brandýs nad Labem-Stará Boleslav'
-            elif data['orp_nazev'] == 'Praha':
-                data['orp_kod'] = 1000
-
-            if orp_kod != data['orp_kod']:
-                incidence = None
-                orp_kod = data['orp_kod']
-
-            if incidence is not None:
-                incidence = max(data['incidence_7'] - incidence, 0)
-
-            data['incidence'] = incidence
-
-            incidence = data['incidence_7']
 
         with open('%s/%s' % (DATA_PATH, 'orp-ockovani-geografie.json'), 'r', encoding='utf-8') as file:
             ockovani = json.load(file)['data']
@@ -265,23 +241,26 @@ class DBC:
 
         datum = ockovani[0].get('datum')
         orp = ockovani[0].get('orp_bydliste_kod')
+        orp_nazev = ockovani[0].get('orp_bydliste')
         kraj = ockovani[0].get('kraj_nazev')
         nuts = ockovani[0].get('kraj_nuts_kod')
         pocet = 0
         ockovani_merged = []
         for data in ockovani:
-            if data.get('datum') != datum or data.get('orp_bydliste_kod') != kraj:
+            if data.get('datum') != datum or data.get('orp_bydliste_kod') != orp:
                 ockovani_merged.append({
                     "datum": datum,
                     "kraj_nuts_kod": nuts,
                     "kraj_nazev": kraj,
                     "orp_kod": orp,
-                    "pocet_davek": pocet
+                    "pocet_davek": pocet,
+                    "orp_nazev": orp_nazev
                 })
                 datum = data.get('datum')
                 orp = data.get('orp_bydliste_kod')
                 kraj = data.get('kraj_nazev')
                 nuts = data.get('kraj_nuts_kod')
+                orp_nazev = data.get('orp_bydliste')
                 pocet = data.get('pocet_davek')
             else:
                 pocet += data.get('pocet_davek')
@@ -290,31 +269,20 @@ class DBC:
                     "kraj_nuts_kod": nuts,
                     "kraj_nazev": kraj,
                     "orp_kod": orp,
-                    "pocet_davek": pocet
+                    "pocet_davek": pocet,
+                    "orp_nazev": orp_nazev
                 })
 
-        l = [{**i1, **i2} for i1, i2 in mergeListsByTwoKeys(datalist, ockovani_merged, key1="datum", key2="orp_kod")]
-
-        for data in l:
-            document.append(self.create_record_nakazeni_hospitalizovani_orp(data))
+        for data in ockovani_merged:
+            document.append(self.create_record_ockovani_orp(data))
 
         coll.insert_many(document)
 
-    def create_record_nakazeni_hospitalizovani_orp(self, data: dict) -> dict:
+    def create_record_ockovani_orp(self, data: dict) -> dict:
         return {
             'datum': DateParser.parse(data['datum']),
             'orp_kod': data.get('orp_kod', 0),
             'orp_nazev': data.get('orp_nazev', ''),
-            'incidence_7': data.get('incidence_7', 0),
-            'incidence_65_7': data.get('incidence_65_7', 0),
-            'incidence_75_7': data.get('incidence_75_7', 0),
-            'incidence_diff': data['incidence'],
-            'prevalence': data.get('prevalence', 0), # aktivni pripady nakazy
-            'prevalence_65': data.get('prevalence_65', 0),
-            'prevalence_75': data.get('prevalence_75', 0),
-            'aktualni_pocet_hospitalizovanych_osob': data.get('aktualni_pocet_hospitalizovanych_osob', 0),
-            'nove_hosp_7': data.get('nove_hosp_7', 0),
-            'testy_7': data.get('testy_7', 0), # PCR
             'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
             'kraj_nazev': data.get('kraj_nazev', 0),
             'pocet_davek': data.get('pocet_davek', 0)
@@ -428,7 +396,7 @@ class DBC:
         dbc.create_collection_covid_po_dnech_cr()
         dbc.create_collection_nakazeni_vek_okres_kraj()
         dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
-        dbc.create_collection_nakazeni_hospitalizovani_orp()
+        dbc.create_collection_ockovani_orp()
         dbc.create_collection_nakazeni_obce()
 
 if __name__ == '__main__':
