@@ -353,12 +353,16 @@ class DBC:
             'pocet_davek': data.get('pocet_davek', 0)
         }
 
+    def create_all_collections() -> None:
+        dbc.delete_db()
+        dbc.create_collection_hosptializace_cr()
+        dbc.create_collection_obyvatelstvo_kraj()
+        dbc.create_collection_covid_po_dnech_cr()
+        dbc.create_collection_nakazeni_vek_okres_kraj()
+        dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
+        dbc.create_collection_nakazeni_hospitalizovani_orp()
+
 if __name__ == '__main__':
     dbc = DBC()
-    dbc.delete_db()
-    #dbc.create_collection_hosptializace_cr()
-    dbc.create_collection_obyvatelstvo_kraj()
-    #dbc.create_collection_covid_po_dnech_cr()
-    #dbc.create_collection_nakazeni_vek_okres_kraj()
-    #dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
-    #dbc.create_collection_nakazeni_hospitalizovani_orp()
+    dbc.create_all_collections()
+
