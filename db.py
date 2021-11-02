@@ -175,7 +175,7 @@ class DBC:
         return {
             'datum': DateParser.parse(data['datum']),
             'vek': data.get('vek', 0),
-            'pohlavy': data.get('pohlavy', 0),
+            'pohlavi': data.get('pohlavi', 0),
             'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
             'okres_lau_kod': data.get('okres_lau_kod', 0),
             'nakaza_v_zahranici': data.get('nakaza_v_zahranici', 0),
@@ -353,6 +353,38 @@ class DBC:
             'pocet_davek': data.get('pocet_davek', 0)
         }
 
+    def create_collection_nakazeni_obce(self) -> None:
+        coll = self.get_collection('nakazeni_obce')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'obce-nakazeni.json'), 'r', encoding='utf-8') as file:
+            json_data = json.load(file)['data']
+
+        for data in json_data:
+            if type(data) is dict:
+                document.append(self.create_record_nakazeni_obce(data))
+
+        coll.insert_many(document)
+
+    def create_record_nakazeni_obce(self, data: dict) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', None),
+            'kraj_nazev': data.get('kraj_nazev', ''),
+            'okres_lau_kod': data.get('okres_lau_kod', None),
+            'okres_nazev': data.get('okres_nazev', ''),
+            'orp_kod': data.get('orp_kod', None),
+            'orp_nazev': data.get('orp_nazev', ''),
+            'obec_kod': data.get('obec_kod', None), # ciselnik CISOB
+            'obec_nazev': data.get('obec_nazev', ''),
+            'nove_pripady': data.get('nove_pripady', 0),
+            'aktivni_pripady': data.get('aktivni_pripady', 0),
+            'nove_pripady_65': data.get('nove_pripady_65', 0),
+            'nove_pripady_7_dni': data.get('nove_pripady_7_dni', 0),
+            'nove_pripady_14_dni': data.get('nove_pripady_14_dni', 0)
+        }
+
     def create_all_collections() -> None:
         dbc.delete_db()
         dbc.create_collection_hosptializace_cr()
@@ -361,8 +393,8 @@ class DBC:
         dbc.create_collection_nakazeni_vek_okres_kraj()
         dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
         dbc.create_collection_nakazeni_hospitalizovani_orp()
+        dbc.create_collection_nakazeni_obce()
 
 if __name__ == '__main__':
     dbc = DBC()
     dbc.create_all_collections()
-
