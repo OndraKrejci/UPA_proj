@@ -44,6 +44,8 @@ DATA: List[dict] = [
 
     # CISELNIKY
     {'name': 'vazba-orp-kraj-nuts.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=1&cisvaz=100_398&datpohl=01.11.2021&cisjaz=203&format=2&separator=%2C'},
+    {'name': 'orp-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=0&cisvaz=80007_97&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
+    {'name': 'kraj-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=100&typdat=0&cisvaz=80007_885&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
 
     # TODO
     {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
