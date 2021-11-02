@@ -162,6 +162,6 @@ class Kraje:
 
     def get_nuts(self, kod: int) -> Union[str, None]:
         if kod in self.kody:
-            return self.kody[kod]
-        
+            return self.kody[kod]['nuts']
+
         return None
