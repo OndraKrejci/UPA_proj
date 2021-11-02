@@ -1,9 +1,12 @@
 
 import pymongo
 
+import sys
 import json
 import csv
 from dateutil import parser as DateParser
+
+from typing import Union
 
 from download import DATA_PATH
 from ciselniky import UZEMI_KRAJ, Kraje
@@ -16,12 +19,29 @@ from xls import get_obyvatelia_orp
 
 class DBC:
     DB_NAME = 'covid'
+    DEFAULT_HOST = 'localhost'
+    DEFAULT_PORT = 27017
 
-    def __init__(self, host: str = 'localhost', port: int = 27017) -> None:
-        self.connect(host, port)
+    def __init__(self, host: str = 'localhost', port: int = 27017, timeout: Union[int, None] = None) -> None:
+        self.conn = None
+        self.db = None
+        self.connect(host, port, timeout)
 
-    def connect(self, host: str = 'localhost', port: int = 27017) -> None:
-        self.conn = pymongo.MongoClient(host, port)
+    def __del__(self):
+        if self.conn:
+            self.conn.close()
+
+    def connect(self, host: str, port: int, timeout: Union[int, None] = None) -> None:
+        timeout = timeout if timeout is not None else 5000
+        
+        self.conn = pymongo.MongoClient(host, port, socketTimeoutMS=timeout, connectTimeoutMS=timeout, serverSelectionTimeoutMS=timeout)
+
+        try:
+            self.conn.admin.command('ping')
+        except pymongo.errors.ConnectionFailure:
+            print('Failed to connect to the server at %s:%i' % (host, port))
+            sys.exit(1)
+
         self.db = self.conn[DBC.DB_NAME]
 
     def delete_db(self) -> None:
