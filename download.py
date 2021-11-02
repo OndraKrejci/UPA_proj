@@ -47,9 +47,9 @@ DATA: List[dict] = [
     {'name': 'orp-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=0&cisvaz=80007_97&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
     {'name': 'kraj-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=100&typdat=0&cisvaz=80007_885&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
 
-    # TODO
-    {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
+    # CSU - obyvatelstvo a umrti po skupinach obyvatel a uzemnich celcich
     {'name': 'kraj-okres-obyvatelstvo.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
+    {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
 
     # POPULACE
     {'name': 'praha.xlsx', 'url': 'https://www.czso.cz/documents/10180/143060149/33012121q1s06.xlsx/12ed34b5-29cb-4415-87cb-f2841aaf50fc?version=1.3'}, # https://www.czso.cz/csu/czso/s-vybrane-udaje-podle-nizsich-uzemne-spravnich-celku-kraje-hl-m-praha-d8fn9ncq8e

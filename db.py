@@ -483,6 +483,31 @@ class DBC:
         coll = self.get_collection('obyvatelia_orp')
         coll.insert(get_obyvatelia_orp(DATA_PATH))
 
+    def create_collection_umrti_cr(self) -> None:
+        coll = self.get_collection('umrti_cr')
+
+        min_datum = DateParser.parse('2018-01-01')
+        document = []
+        with open('%s/%s' % (DATA_PATH, 'cr-zemreli.csv'), 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+
+            for data in reader:
+                casref_od = DateParser.parse(data['casref_od'])
+                if casref_od > min_datum:
+                  document.append(self.create_record_umrti_cr(data, casref_od))
+
+        coll.insert_many(document)
+    
+    def create_record_umrti_cr(self, data: OrderedDict, casref_od) -> dict:
+        return {
+            'pocet': int(data['hodnota']) if data['hodnota'] else None,
+            'vek_kod': data['vek_kod'], # CSU 7700
+            'vek_txt': data['vek_txt'],
+            'casref_od': casref_od,
+            'casref_do': DateParser.parse(data['casref_do']),
+            'priznak': data['priznak']
+        }
+
     def create_all_collections(self) -> None:
         dbc.delete_db()
         dbc.create_collection_obyvatelstvo_kraj()
@@ -495,6 +520,7 @@ class DBC:
         dbc.create_collection_vyleceni_vek_okres_kraj()
         dbc.create_collection_nakazeni_hospitalizovani_orp()
         dbc.create_collection_obyvatelia_orp()
+        dbc.create_collection_umrti_cr()
 
 if __name__ == '__main__':
     dbc = DBC()
