@@ -32,23 +32,6 @@ UZEMI_OKRES = 101
 UZEMI_KRAJ = 100
 UZEMI_REPUBLIKA = 97
 
-NUTS3 = {
-    'CZ010': 'Hlavní město Praha',
-    'CZ020': 'Středočeský kraj',
-    'CZ031': 'Jihočeský kraj',
-    'CZ032': 'Plzeňský kraj',
-    'CZ041': 'Karlovarský kraj',
-    'CZ042': 'Ústecký kraj',
-    'CZ051': 'Liberecký kraj',
-    'CZ052': 'Královéhradecký kraj',
-    'CZ053': 'Pardubický kraj',
-    'CZ063': 'Kraj Vysočina',
-    'CZ064': 'Jihomoravský kraj',
-    'CZ071': 'Olomoucký kraj',
-    'CZ072': 'Zlínský kraj',
-    'CZ080': 'Moravskoslezský kraj'
-}
-
 class ORP:
     def __init__(self) -> None:
         self.nazvy, self.zkracene = ORP.get_orp_nazvy()
@@ -127,3 +110,58 @@ class ORP:
 
         return None
 
+class Kraje:
+    def __init__(self) -> None:
+        self.kody = Kraje.load_kraje_ciselnik()
+
+    NUTS3 = {
+        'CZ010': 'Hlavní město Praha',
+        'CZ020': 'Středočeský kraj',
+        'CZ031': 'Jihočeský kraj',
+        'CZ032': 'Plzeňský kraj',
+        'CZ041': 'Karlovarský kraj',
+        'CZ042': 'Ústecký kraj',
+        'CZ051': 'Liberecký kraj',
+        'CZ052': 'Královéhradecký kraj',
+        'CZ053': 'Pardubický kraj',
+        'CZ063': 'Kraj Vysočina',
+        'CZ064': 'Jihomoravský kraj',
+        'CZ071': 'Olomoucký kraj',
+        'CZ072': 'Zlínský kraj',
+        'CZ080': 'Moravskoslezský kraj'
+    }
+    
+    @staticmethod
+    def load_kraje_ciselnik() -> dict:
+        with open('%s/%s' % (DATA_PATH, 'kraj-ciselnik.csv'), 'r', encoding='windows-1250') as file:
+            header = [
+                'KODJAZ',
+                'AKRCIS',
+                'KODCIS',
+                'kraj_kod',
+                'ZKRTEXT',
+                'kraj_text',
+                'ADMPLOD',
+                'ADMNEPO',
+                'kraj_nuts',
+                'KOD_RUIAN',
+                'ZKRKRAJ'
+            ]
+            reader = csv.DictReader(file, header)
+            reader.__next__() # header
+
+            kody = {}
+            for line in reader:
+                kod = int(line['kraj_kod'])
+                kody[kod] = {
+                    'nazev': line['kraj_text'],
+                    'nuts': line['kraj_nuts']
+                }
+
+            return kody
+
+    def get_nuts(self, kod: int) -> Union[str, None]:
+        if kod in self.kody:
+            return self.kody[kod]
+        
+        return None
