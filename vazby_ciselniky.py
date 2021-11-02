@@ -19,21 +19,30 @@ def load_vazby_orp_kraj():
         ]
         reader = csv.DictReader(file, header)
 
-        with open('vazba_orp_kraj.py', 'w', encoding='utf-8') as file:
-            first = True
-            file.write('\nORP = {\n')
-            for line in reader:
-                if first:
-                    first = False
-                    continue
-                
-                file.write("\t%s: {'nazev': '%s', 'kraj_kod': %s, 'kraj_nazev': '%s'},\n" % (
-                    line['orp_kod'],
-                    line['orp_nazev'],
-                    line['kraj_kod'],
-                    line['kraj_nazev']
-                ))
-            file.write('}\n')
+        orp_data = []
+        first = True
+        for line in reader:
+            if first:
+                first = False
+                continue
+
+            orp_data.append({
+                'orp_kod': line['orp_kod'],
+                'orp_nazev': line['orp_nazev'],
+                'kraj_kod': line['kraj_kod'],
+                'kraj_nazev': line['kraj_nazev']
+            })
+            
+    with open('vazba_orp_kraj.py', 'w', encoding='utf-8') as file:
+        file.write('\nORP = {\n')
+        for data in orp_data:
+            file.write("\t'%s': {'orp_kod': %s, 'kraj_kod': %s, 'kraj_nazev': '%s'},\n" % (
+                data['orp_nazev'],
+                data['orp_kod'],
+                data['kraj_kod'],
+                data['kraj_nazev']
+            ))
+        file.write('}\n\n')
 
 if __name__ == '__main__':
     load_vazby_orp_kraj()
