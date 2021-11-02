@@ -436,6 +436,38 @@ class DBC:
             'nove_pripady_14_dni': data.get('nove_pripady_14_dni', 0)
         }
 
+    def create_collection_nakazeni_hospitalizovani_orp(self) -> None:
+        coll = self.get_collection('nakazeni-hospitalizovani-orp')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'orp-nakazeni-hospitalizovani.json'), 'r') as file:
+            json_data = json.load(file)['data']
+
+
+        for data in json_data:
+            document.append(self.create_record_nakazeni_hospitalizovani_orp(data))
+
+        coll.insert_many(document)
+
+    def create_record_nakazeni_hospitalizovani_orp(self, data: OrderedDict) -> dict:
+        return {
+            'den': data.get('den', 0),
+            'datum': DateParser.parse(data['datum']),
+            'orp_kod': data.get('orp_kod', 0),
+            'orp_nazev': data.get('orp_nazev', 0),
+            'incidence_7': data.get('incidence_7', 0),
+            'incidence_65_7': data.get('incidence_65_7', 0),
+            'incidence_75_7': data.get('incidence_75_7', 0),
+            'prevalence': data.get('prevalence', 0),
+            'prevalence_65': data.get('prevalence_65', 0),
+            'prevalence_75': data.get('prevalence_75', 0),
+            'aktualni_pocet_hospitalizovanych_osob': data.get('aktualni_pocet_hospitalizovanych_osob', 0),
+            'nove_hosp_7': data.get('nove_hosp_7', 0),
+            'testy_7': data.get('testy_7', 0),
+
+        }
+
     def create_all_collections(self) -> None:
         dbc.delete_db()
         dbc.create_collection_obyvatelstvo_kraj()
@@ -446,7 +478,9 @@ class DBC:
         dbc.create_collection_nakazeni_obce()
         dbc.create_collection_umrti_vek_okres_kraj()
         dbc.create_collection_vyleceni_vek_okres_kraj()
+        dbc.create_collection_nakazeni_hospitalizovani_orp()
 
 if __name__ == '__main__':
     dbc = DBC()
-    dbc.create_all_collections()
+    #dbc.create_all_collections()
+    dbc.create_collection_nakazeni_hospitalizovani_orp()
