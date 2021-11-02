@@ -22,11 +22,9 @@ CSU7700 = {
     '410095799999000': '95 a více'
 }
 
-UZEMI = {
-    101: 'okres',
-    100: 'kraj',
-    97: 'republika'
-}
+UZEMI_OKRES = 101
+UZEMI_KRAJ = 100
+UZEMI_REPUBLIKA = 97
 
 NUTS3 = {
     'CZ010': 'Hlavní město Praha',

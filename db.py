@@ -6,6 +6,7 @@ import csv
 from dateutil import parser as DateParser
 
 from download import DATA_PATH
+from ciselniky import UZEMI_KRAJ
 
 from collections import OrderedDict
 
@@ -65,8 +66,8 @@ class DBC:
             'kum_umrti': data.get('kum_umrti', 0)
         }
 
-    def create_collection_obyvatelstvo(self) -> None:
-        coll = self.get_collection('obyvatelstvo')
+    def create_collection_obyvatelstvo_kraj(self) -> None:
+        coll = self.get_collection('obyvatelstvo_kraj')
 
         document = []
 
@@ -74,22 +75,21 @@ class DBC:
             reader = csv.DictReader(file)
 
             for data in reader:
-                document.append(self.create_record_obyvatelstvo(data))
+                vuzemi_cis = int(data['vuzemi_cis']) if data['vuzemi_cis'] else None
+                if vuzemi_cis == UZEMI_KRAJ:
+                    document.append(self.create_record_obyvatelstvo_kraj(data))
 
         coll.insert_many(document)
 
-    def create_record_obyvatelstvo(self, data: OrderedDict) -> dict:
+    def create_record_obyvatelstvo_kraj(self, data: OrderedDict) -> dict:
         return {
-            'pocet': data['hodnota'],
-            'pohlavi_cis': data['pohlavi_kod'],
-            'vek_cis': data['vek_cis'],
+            'pocet': int(data['hodnota']) if data['hodnota'] else None,
+            'pohlavi_kod': int(data['pohlavi_kod']) if data['pohlavi_kod'] else None, # 1=muz, 2=zena
             'vek_kod': data['vek_kod'], # CSU7700
-            'vuzemi_cis': data['vuzemi_cis'],
-            'vuzemi_kod': data['vuzemi_kod'],
-            'casref_do': DateParser.parse(data['casref_do']),
-            'pohlavi_txt': data['pohlavi_txt'],
             'vek_txt': data['vek_txt'],
-            'vuzemi_txt': data['vuzemi_txt']
+            'kraj_kod': data['vuzemi_kod'],
+            'kraj_nazev': data['vuzemi_txt'],
+            'casref_do': DateParser.parse(data['casref_do'])
         }
         
     def create_collection_covid_po_dnech_cr(self) -> None:
@@ -356,9 +356,9 @@ class DBC:
 if __name__ == '__main__':
     dbc = DBC()
     dbc.delete_db()
-    dbc.create_collection_hosptializace_cr()
-    dbc.create_collection_obyvatelstvo()
-    dbc.create_collection_covid_po_dnech_cr()
-    dbc.create_collection_nakazeni_vek_okres_kraj()
-    dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
-    dbc.create_collection_nakazeni_hospitalizovani_orp()
+    #dbc.create_collection_hosptializace_cr()
+    dbc.create_collection_obyvatelstvo_kraj()
+    #dbc.create_collection_covid_po_dnech_cr()
+    #dbc.create_collection_nakazeni_vek_okres_kraj()
+    #dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
+    #dbc.create_collection_nakazeni_hospitalizovani_orp()
