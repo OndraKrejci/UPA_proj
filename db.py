@@ -522,5 +522,4 @@ class DBC:
 
 if __name__ == '__main__':
     dbc = DBC()
-    #dbc.create_all_collections()
-    dbc.create_collection_obyvatele_orp()
+    dbc.create_all_collections()
