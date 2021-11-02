@@ -50,6 +50,7 @@ DATA: List[dict] = [
     {'name': 'kraj-okres-obyvatelstvo.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
 
     # POPULACE
+    {'name': 'praha.xlsx', 'url': 'https://www.czso.cz/documents/10180/143060149/33012121q1s06.xlsx/12ed34b5-29cb-4415-87cb-f2841aaf50fc?version=1.3'}, # https://www.czso.cz/csu/czso/s-vybrane-udaje-podle-nizsich-uzemne-spravnich-celku-kraje-hl-m-praha-d8fn9ncq8e
     {'name': 'stredocesky.xlsx', 'url': 'https://www.czso.cz/documents/11240/162915457/20_petilete_ORP.xlsx/7637f17e-3edf-4089-baba-666a2df71d96?version=1.1'}, # https://www.czso.cz/csu/xs/vekove_slozeni_obyvatelstva_stc_kraje
     {'name': 'jihocesky.xlsx', 'url': 'https://www.czso.cz/documents/11256/35330526/r6.xlsx/7eb9d831-d423-4cb6-b971-9cc17c8880d9?version=1.2'}, # https://www.czso.cz/csu/xc/vybrane_udaje_za_vsechny_so_orp
     {'name': 'plzensky.xlsx', 'url': 'https://www.czso.cz/documents/10180/142908552/33010921q1r6.xlsx/3a4ca1fb-c7cc-4e19-a305-7533b42c4edf?version=1.1'}, # https://www.czso.cz/csu/czso/r-spravni-obvody-obci-s-rozsirenou-pusobnosti-7sjgutioxw
