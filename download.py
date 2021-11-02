@@ -48,6 +48,9 @@ DATA: List[dict] = [
     # TODO
     {'name': 'cr-zemreli.csv', 'url': 'https://www.czso.cz/documents/62353418/155512389/130185-21data101921.csv/06c23c55-9c1a-4925-8386-8cd9625787ef?version=1.1'},
     {'name': 'kraj-okres-obyvatelstvo.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
+
+    # POPULACE
+    {'name': 'jmk.xlsx', 'url': 'https://www.czso.cz/documents/11280/17803643/vu06.xlsx/57579f26-b5b5-4512-af06-2c2f27086cae?version=1.21'}
 ]
 
 def ensure_folder(path: str) -> None:
