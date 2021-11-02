@@ -12,6 +12,8 @@ from collections import OrderedDict
 
 from merge import mergeListsByKey, mergeListsByTwoKeys
 
+from xls import get_obyvatelia_orp
+
 class DBC:
     DB_NAME = 'covid'
 
@@ -468,6 +470,10 @@ class DBC:
 
         }
 
+    def create_collection_obyvatelia_orp(self) -> None:
+        coll = self.get_collection('obyvatelia_orp')
+        coll.insert(get_obyvatelia_orp(DATA_PATH))
+
     def create_all_collections(self) -> None:
         dbc.delete_db()
         dbc.create_collection_obyvatelstvo_kraj()
@@ -479,8 +485,8 @@ class DBC:
         dbc.create_collection_umrti_vek_okres_kraj()
         dbc.create_collection_vyleceni_vek_okres_kraj()
         dbc.create_collection_nakazeni_hospitalizovani_orp()
+        dbc.create_collection_obyvatelia_orp()
 
 if __name__ == '__main__':
     dbc = DBC()
-    #dbc.create_all_collections()
-    dbc.create_collection_nakazeni_hospitalizovani_orp()
+    dbc.create_all_collections()
