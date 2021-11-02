@@ -17,7 +17,7 @@ class DBC:
 
     def __init__(self) -> None:
         self.connect()
-    
+
     def connect(self, host: str = 'localhost', port: int = 27017) -> None:
         self.conn = pymongo.MongoClient(host, port)
         self.db = self.conn[DBC.DB_NAME]
@@ -58,7 +58,7 @@ class DBC:
             'kraj_nazev': data['vuzemi_txt'],
             'casref_do': DateParser.parse(data['casref_do'])
         }
-        
+
     def create_collection_covid_po_dnech_cr(self) -> None:
         coll = self.get_collection('covid_po_dnech_cr')
 
@@ -66,22 +66,22 @@ class DBC:
 
         with open('%s/%s' % (DATA_PATH, 'cr-hospitalizace-umrti.json'), 'r') as file:
             hospitalizace = json.load(file)['data']
-        
+
         with open('%s/%s' % (DATA_PATH, 'cr-nakazeni-vyleceni-umrti-testy.json'), 'r') as file:
             nakazeni = json.load(file)['data']
-        
+
         with open('%s/%s' % (DATA_PATH, 'cr-testy.json'), 'r') as file:
             testy = json.load(file)['data']
-        
+
         l1 = [{**i1, **i2} for i1, i2 in mergeListsByKey(hospitalizace, nakazeni, key="datum")]
         l2 = [{**i1, **i2} for i1, i2 in mergeListsByKey(l1, testy, key="datum")]
-        
+
 
         for data in l2:
             document.append(self.create_record_covid_po_dnech_cr(data))
 
         coll.insert_many(document)
-    
+
     def create_record_covid_po_dnech_cr(self, data: OrderedDict) -> dict:
         return {
             'datum': DateParser.parse(data['datum']),
@@ -123,7 +123,7 @@ class DBC:
             'umrti': data.get('umrti', 0),
             'upv': data.get('upv', 0),
         }
-        
+
     def create_collection_nakazeni_vek_okres_kraj(self) -> None:
         coll = self.get_collection('nakazeni_vek_okres_kraj')
 
@@ -131,13 +131,13 @@ class DBC:
 
         with open('%s/%s' % (DATA_PATH, 'kraj-okres-nakazeni.json'), 'r') as file:
             json_data = json.load(file)['data']
-        
+
 
         for data in json_data:
             document.append(self.create_record_nakazeni_vek_okres_kraj(data))
 
         coll.insert_many(document)
-    
+
     def create_record_nakazeni_vek_okres_kraj(self, data: OrderedDict) -> dict:
         return {
             'datum': DateParser.parse(data['datum']),
@@ -148,17 +148,17 @@ class DBC:
             'nakaza_v_zahranici': data.get('nakaza_v_zahranici', 0),
             'nakaza_zeme_csu_kod': data.get('nakaza_zeme_csu_kod', 0),
         }
-        
+
     def create_collection_nakazeni_vyleceni_umrti_testy_kraj(self) -> None:
         coll = self.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
-        
+
         document = []
-        
+
         with open('%s/%s' % (DATA_PATH, 'kraj-okres-testy.json'), 'r') as file:
             testy = json.load(file)['data']
-        
+
         testy = sorted(testy, key=lambda x: (x['datum'], x['kraj_nuts_kod']))
-        
+
         datum = ''
         kraj = ''
         testy_merged = []
@@ -167,14 +167,14 @@ class DBC:
                 testy_merged.append(data)
                 datum = data.get('datum')
                 kraj = data.get('kraj_nuts_kod')
-        
+
         with open('%s/%s' % (DATA_PATH, 'kraj-okres-nakazeni-vyleceni-umrti.json'), 'r') as file:
             nakazeni_vyleceni_umrti = json.load(file)['data']
-            
+
         nakazeni_vyleceni_umrti = [i for i in nakazeni_vyleceni_umrti if i['kraj_nuts_kod']]
-        
+
         nakazeni_vyleceni_umrti = sorted(nakazeni_vyleceni_umrti, key=lambda x: (x['datum'], x['kraj_nuts_kod']))
-        
+
         datum = nakazeni_vyleceni_umrti[0].get('datum')
         kraj = nakazeni_vyleceni_umrti[0].get('kraj_nuts_kod')
         nakazeni = 0
@@ -206,14 +206,14 @@ class DBC:
                     "kumulativni_pocet_vylecenych": vyleceni,
                     "kumulativni_pocet_umrti": umrti
                 })
-        
+
         l = [{**i1, **i2} for i1, i2 in mergeListsByTwoKeys(testy_merged, nakazeni_vyleceni_umrti_merged, key1="datum", key2="kraj_nuts_kod")]
-        
+
         for data in l:
             document.append(self.create_record_nakazeni_vyleceni_umrti_testy_kraj(data))
 
         coll.insert_many(document)
-        
+
     def create_record_nakazeni_vyleceni_umrti_testy_kraj(self, data: OrderedDict) -> dict:
         return {
             'datum': DateParser.parse(data['datum']),
@@ -248,21 +248,21 @@ class DBC:
             if orp_kod != data['orp_kod']:
                 incidence = None
                 orp_kod = data['orp_kod']
-            
+
             if incidence is not None:
                 incidence = max(data['incidence_7'] - incidence, 0)
 
             data['incidence'] = incidence
 
             incidence = data['incidence_7']
-        
+
         with open('%s/%s' % (DATA_PATH, 'orp-ockovani-geografie.json'), 'r', encoding='utf-8') as file:
             ockovani = json.load(file)['data']
-            
+
         ockovani = [i for i in ockovani if i['orp_bydliste_kod']]
-        
+
         ockovani = sorted(ockovani, key=lambda x: (x['datum'], x['orp_bydliste_kod']))
-        
+
         datum = ockovani[0].get('datum')
         orp = ockovani[0].get('orp_bydliste_kod')
         kraj = ockovani[0].get('kraj_nazev')
@@ -292,9 +292,9 @@ class DBC:
                     "orp_kod": orp,
                     "pocet_davek": pocet
                 })
-        
+
         l = [{**i1, **i2} for i1, i2 in mergeListsByTwoKeys(datalist, ockovani_merged, key1="datum", key2="orp_kod")]
-        
+
         for data in l:
             document.append(self.create_record_nakazeni_hospitalizovani_orp(data))
 
@@ -326,9 +326,81 @@ class DBC:
         document = []
 
         with open('%s/%s' % (DATA_PATH, 'obce-nakazeni.json'), 'r', encoding='utf-8') as file:
-            json_data = json.load(file)['data']
+            nakazeni = json.load(file)['data']
 
-        for data in json_data:
+        nakazeni = [i for i in nakazeni if i['orp_kod']]
+
+        nakazeni = sorted(nakazeni, key=lambda x: (x['datum'], x['orp_kod']))
+
+        den = nakazeni[0].get('den')
+        datum = nakazeni[0].get('datum')
+        nuts = nakazeni[0].get('kraj_nuts_kod')
+        kraj = nakazeni[0].get('kraj_nazev')
+        lau = nakazeni[0].get('okres_lau_kod')
+        okres = nakazeni[0].get('okres_nazev')
+        orp = nakazeni[0].get('orp_kod')
+        orp_nazev = nakazeni[0].get('orp_nazev')
+        nove = 0
+        aktivni = 0
+        nove65 = 0
+        nove7 = 0
+        nove14 = 0
+
+        nakazeni_merged = []
+        for data in nakazeni:
+            if data.get('datum') != datum or data.get('orp_kod') != orp:
+                nakazeni_merged.append({
+                    "den": den,
+                    "datum": datum,
+                    "kraj_nuts_kod": nuts,
+                    "kraj_nazev": kraj,
+                    "okres_lau_kod": lau,
+                    "okres_nazev": okres,
+                    "orp_kod": orp,
+                    "orp_nazev": orp_nazev,
+                    "nove_pripady": nove,
+                    "aktivni_pripady": aktivni,
+                    "nove_pripady_65": nove65,
+                    "nove_pripady_7_dni": nove7,
+                    "nove_pripady_14_dni": nove14
+                })
+                den = data.get('den')
+                datum = data.get('datum')
+                nuts = data.get('kraj_nuts_kod')
+                kraj = data.get('kraj_nazev')
+                lau = data.get('okres_lau_kod')
+                okres = data.get('okres_nazev')
+                orp = data.get('orp_kod')
+                orp_nazev = data.get('orp_nazev')
+                nove = data.get('nove_pripady')
+                aktivni = data.get('aktivni_pripady')
+                nove65 = data.get('nove_pripady_65')
+                nove7 = data.get('nove_pripady_7_dni')
+                nove14 = data.get('nove_pripady_14_dni')
+            else:
+                nove += data.get('nove_pripady')
+                aktivni += data.get('aktivni_pripady')
+                nove65 += data.get('nove_pripady_65')
+                nove7 += data.get('nove_pripady_7_dni')
+                nove14 += data.get('nove_pripady_14_dni')
+
+        nakazeni_merged.append({
+                    "den": den,
+                    "datum": datum,
+                    "kraj_nuts_kod": nuts,
+                    "kraj_nazev": kraj,
+                    "okres_lau_kod": lau,
+                    "okres_nazev": okres,
+                    "orp_kod": orp,
+                    "orp_nazev": orp_nazev,
+                    "nove_pripady": nove,
+                    "aktivni_pripady": aktivni,
+                    "nove_pripady_65": nove65,
+                    "nove_pripady_7_dni": nove7,
+                    "nove_pripady_14_dni": nove14
+                })
+
+        for data in nakazeni_merged:
             if type(data) is dict:
                 document.append(self.create_record_nakazeni_obce(data))
 
@@ -343,8 +415,6 @@ class DBC:
             'okres_nazev': data.get('okres_nazev', ''),
             'orp_kod': data.get('orp_kod', None),
             'orp_nazev': data.get('orp_nazev', ''),
-            'obec_kod': data.get('obec_kod', None), # ciselnik CISOB
-            'obec_nazev': data.get('obec_nazev', ''),
             'nove_pripady': data.get('nove_pripady', 0),
             'aktivni_pripady': data.get('aktivni_pripady', 0),
             'nove_pripady_65': data.get('nove_pripady_65', 0),
