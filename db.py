@@ -526,19 +526,19 @@ class DBC:
         }
 
     def create_all_collections(self) -> None:
-        dbc.delete_db()
+        self.delete_db()
 
-        dbc.create_collection_obyvatelstvo_kraj()
-        dbc.create_collection_covid_po_dnech_cr()
-        dbc.create_collection_nakazeni_vek_okres_kraj()
-        dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
-        dbc.create_collection_ockovani_orp()
-        dbc.create_collection_nakazeni_orp()
-        dbc.create_collection_umrti_vek_okres_kraj()
-        dbc.create_collection_vyleceni_vek_okres_kraj()
-        dbc.create_collection_nakazeni_hospitalizovani_orp()
-        dbc.create_collection_obyvatele_orp()
-        dbc.create_collection_umrti_cr()
+        self.create_collection_obyvatelstvo_kraj()
+        self.create_collection_covid_po_dnech_cr()
+        self.create_collection_nakazeni_vek_okres_kraj()
+        self.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
+        self.create_collection_ockovani_orp()
+        self.create_collection_nakazeni_orp()
+        self.create_collection_umrti_vek_okres_kraj()
+        self.create_collection_vyleceni_vek_okres_kraj()
+        self.create_collection_nakazeni_hospitalizovani_orp()
+        self.create_collection_obyvatele_orp()
+        self.create_collection_umrti_cr()
 
 if __name__ == '__main__':
     dbc = DBC()
