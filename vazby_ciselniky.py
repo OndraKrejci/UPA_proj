@@ -67,8 +67,8 @@ def get_orp_nazvy() -> Tuple[dict, dict]:
     nazvy = {}
     zkracene = {}
     for orp_kod, data in orp_kraj_vazba.items():
-        nazvy[orp_kod] = data['nazev']
-        zkracene[orp_kod] = data['zkraceny_nazev']
+        nazvy[data['nazev']] = orp_kod
+        zkracene[data['zkraceny_nazev']] = orp_kod
 
     return (nazvy, zkracene)
 
