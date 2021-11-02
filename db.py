@@ -32,14 +32,14 @@ class DBC:
             self.conn.close()
 
     def connect(self, host: str, port: int, timeout: Union[int, None] = None) -> None:
-        timeout = timeout if timeout is not None else 5000
-        
-        self.conn = pymongo.MongoClient(host, port, socketTimeoutMS=timeout, connectTimeoutMS=timeout, serverSelectionTimeoutMS=timeout)
+        timeout = timeout if timeout is not None else 15000
+
+        self.conn = pymongo.MongoClient(host, port, serverSelectionTimeoutMS=timeout)
 
         try:
             self.conn.admin.command('ping')
         except pymongo.errors.ConnectionFailure:
-            print('Failed to connect to the server at %s:%i' % (host, port))
+            print('Failed to connect to the server at %s:%i' % (host, port), file=sys.stderr)
             sys.exit(1)
 
         self.db = self.conn[DBC.DB_NAME]
