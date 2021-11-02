@@ -63,7 +63,7 @@ DATA: List[dict] = [
     {'name': 'pardubicky.xlsx', 'url': 'https://www.czso.cz/documents/10180/142303940/33009321q1r6.xlsx/62591f85-85ad-4ada-8c2f-637674575d14?version=1.1'}, # https://www.czso.cz/csu/czso/r-spravni-obvody-obci-s-rozsirenou-pusobnosti-so-orp-pardubickeho-kraje-mfx4ug0p08
     {'name': 'vysocina.xlsx', 'url': 'https://www.czso.cz/documents/11268/17848141/ORP6.xlsx/90579218-9cae-45e1-a0cf-f992364be07b?version=1.12'}, # https://www.czso.cz/csu/xj/udaje_o_obcich_s_rozsirenou_pusobnosti_za_rok_2013
     {'name': 'jihomoravsky.xlsx', 'url': 'https://www.czso.cz/documents/11280/17803643/vu06.xlsx/57579f26-b5b5-4512-af06-2c2f27086cae?version=1.21'}, # https://www.czso.cz/csu/xb/vybrane_udaje_za_spravni_obvody_orp_
-    {'name': 'oloumocky.xlsx', 'url': 'https://www.czso.cz/documents/10180/141885135/33009721q1r06.xlsx/47b4ad4d-29e7-416e-964e-e7b34f170425?version=1.1'}, # https://www.czso.cz/csu/xm/vybrane-udaje-o-so-orp-v-roce-2020
+    {'name': 'olomoucky.xlsx', 'url': 'https://www.czso.cz/documents/10180/141885135/33009721q1r06.xlsx/47b4ad4d-29e7-416e-964e-e7b34f170425?version=1.1'}, # https://www.czso.cz/csu/xm/vybrane-udaje-o-so-orp-v-roce-2020
     {'name': 'moravskoslezsky.xlsx', 'url': 'https://www.czso.cz/documents/10180/142044384/33010121q1r06.xlsx/91ec1d18-64c8-4d5f-8df7-94d0c3c4110c?version=1.0'}, # https://www.czso.cz/csu/czso/r-spravni-obvody-obci-s-rozsirenou-pusobnosti-so-orp-moravskoslezskeho-kraje-kdvejpiwwn
     {'name': 'zlinsky.xlsx', 'url': 'https://www.czso.cz/documents/11284/17856167/33009921q1r06.xlsx/fec57ec5-a8de-4781-b418-ab6ec85b9728?version=1.1'} # https://www.czso.cz/csu/xz/vybrane_udaje_za_spravni_obvody_orp
 ]
