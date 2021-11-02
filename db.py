@@ -149,6 +149,52 @@ class DBC:
             'nakaza_zeme_csu_kod': data.get('nakaza_zeme_csu_kod', 0),
         }
 
+    def create_collection_umrti_vek_okres_kraj(self) -> None:
+        coll = self.get_collection('umrti_vek_okres_kraj')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'kraj-okres-umrti.json'), 'r') as file:
+            json_data = json.load(file)['data']
+
+
+        for data in json_data:
+            document.append(self.create_record_umrti_vek_okres_kraj(data))
+
+        coll.insert_many(document)
+
+    def create_record_umrti_vek_okres_kraj(self, data: OrderedDict) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'vek': data.get('vek', 0),
+            'pohlavi': data.get('pohlavi', 0),
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
+            'okres_lau_kod': data.get('okres_lau_kod', 0),
+        }
+
+    def create_collection_vyleceni_vek_okres_kraj(self) -> None:
+        coll = self.get_collection('vyleceni_vek_okres_kraj')
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'kraj-okres-vyleceni.json'), 'r') as file:
+            json_data = json.load(file)['data']
+
+
+        for data in json_data:
+            document.append(self.create_record_vyleceni_vek_okres_kraj(data))
+
+        coll.insert_many(document)
+
+    def create_record_vyleceni_vek_okres_kraj(self, data: OrderedDict) -> dict:
+        return {
+            'datum': DateParser.parse(data['datum']),
+            'vek': data.get('vek', 0),
+            'pohlavi': data.get('pohlavi', 0),
+            'kraj_nuts_kod': data.get('kraj_nuts_kod', 0),
+            'okres_lau_kod': data.get('okres_lau_kod', 0),
+        }
+
     def create_collection_nakazeni_vyleceni_umrti_testy_kraj(self) -> None:
         coll = self.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
@@ -390,7 +436,7 @@ class DBC:
             'nove_pripady_14_dni': data.get('nove_pripady_14_dni', 0)
         }
 
-    def create_all_collections() -> None:
+    def create_all_collections(self) -> None:
         dbc.delete_db()
         dbc.create_collection_obyvatelstvo_kraj()
         dbc.create_collection_covid_po_dnech_cr()
@@ -398,6 +444,8 @@ class DBC:
         dbc.create_collection_nakazeni_vyleceni_umrti_testy_kraj()
         dbc.create_collection_ockovani_orp()
         dbc.create_collection_nakazeni_obce()
+        dbc.create_collection_umrti_vek_okres_kraj()
+        dbc.create_collection_vyleceni_vek_okres_kraj()
 
 if __name__ == '__main__':
     dbc = DBC()
