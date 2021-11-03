@@ -24,7 +24,7 @@ Pro stažení a zpracování dat používáme skript v jazyce Python, který umo
 Výběr datových sad a jejich případné spojování nebo slučování jejich hodnot provádíme primárně podle potřeb zvolených dotazů pro další část projektu. Ukládáme ale i další datové sady, pro potenciální využití u vlastních dotazů, ze stejného důvodu ponecháváme ve vytvářených kolekcích i hodnoty atributů, které nejsou nutně potřebné.
 
 ## Spuštění
-Projekt pro spuštění vyžaduje Python3 s nainstalovanými moduly vypsanými v `requirements.txt`. Pro stažení a uložení dat do databáze slouží skript `main.py`. Skriptu je možné předat parametry pro připojení k databázi. Skript očekává, že databáze běží a je dostupná při jeho spuštění, ve výchozím nastavení ji očekává na localhost:27017. Je možné použít například databázi na virtuálním stroji používaném na cvičeních z UPA (https://rychly-edu.gitlab.io/dbs/nosql/nixos-dbs-vm/) s nastaveným port forwardingem pro host port a guest port 27017.
+Projekt pro spuštění vyžaduje Python3.7 s nainstalovanými moduly vypsanými v `requirements.txt`. Pro stažení a uložení dat do databáze slouží skript `main.py`. Skriptu je možné předat parametry pro připojení k databázi. Skript očekává, že databáze běží a je dostupná při jeho spuštění, ve výchozím nastavení ji očekává na localhost:27017. Je možné použít například databázi na virtuálním stroji používaném na cvičeních z UPA (https://rychly-edu.gitlab.io/dbs/nosql/nixos-dbs-vm/) s nastaveným port forwardingem pro host port a guest port 27017.
 
 `python3 main.py [--host host] [--port port] [--timeout timeout]`
 
