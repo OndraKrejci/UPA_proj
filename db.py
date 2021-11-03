@@ -16,7 +16,7 @@ from dateutil import parser as DateParser
 from typing import Union
 
 from download import DATA_PATH
-from ciselniky import UZEMI_KRAJ, Kraje
+from ciselniky import UZEMI_KRAJ, Kraje, ORP
 
 from collections import OrderedDict
 
@@ -532,6 +532,44 @@ class DBC:
             'priznak': data['priznak']
         }
 
+    def create_collection_obyvatele_orp2(self) -> None:
+        coll = self.get_collection('obyvatele_orp2')
+
+        orp = ORP()
+        kraje = Kraje()
+
+        document = []
+
+        with open('%s/%s' % (DATA_PATH, 'orp-populace.csv'), 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for data in reader:
+                try:
+                    orp_kod = int(data['vuzemi_kod'])
+                except:
+                    orp_kod = ''
+
+                nuts_kod = None
+                if orp_kod:
+                    kraj_kod = orp.get_kraj_kod(orp_kod)
+                    if kraj_kod:
+                        nuts_kod = kraje.get_nuts(kraj_kod)
+
+                document.append(self.create_record_obyvatele_orp2(data, orp_kod, nuts_kod))
+
+        coll.insert_many(document)
+
+    def create_record_obyvatele_orp2(self, data: OrderedDict, orp_kod, nuts_kod) -> dict:
+        return {
+            'pocet': int(data['hodnota']) if data['hodnota'] else None,
+            'pohlavi_kod': int(data['pohlavi_kod']) if data['pohlavi_kod'] else '', # 1=muz, 2=zena
+            'vek_kod': data['vek_kod'], # CSU7700
+            'vek_txt': data['vek_txt'],
+            'orp_kod': orp_kod,
+            'kraj_nuts_kod': nuts_kod,
+            'orp_nazev': data['vuzemi_txt'],
+            'casref_do': DateParser.parse(data['casref_do'])
+        }
+
     def create_all_collections(self) -> None:
         self.delete_db()
 
@@ -546,6 +584,7 @@ class DBC:
         self.create_collection_nakazeni_hospitalizovani_orp()
         self.create_collection_obyvatele_orp()
         self.create_collection_umrti_cr()
+        self.create_collection_obyvatele_orp2()
 
 if __name__ == '__main__':
     dbc = DBC()

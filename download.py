@@ -50,9 +50,10 @@ DATA: List[dict] = [
     {'name': 'kraj-ockovani.json', 'url': 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovani.json'},
 
     # CISELNIKY
-    {'name': 'vazba-orp-kraj-nuts.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=1&cisvaz=100_398&datpohl=01.11.2021&cisjaz=203&format=2&separator=%2C'},
+    {'name': 'vazba-orp-kraj.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=1&cisvaz=100_398&datpohl=01.11.2021&cisjaz=203&format=2&separator=%2C'},
     {'name': 'orp-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=65&typdat=0&cisvaz=80007_97&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
     {'name': 'kraj-ciselnik.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=100&typdat=0&cisvaz=80007_885&datpohl=02.11.2021&cisjaz=203&format=2&separator=%2C'},
+    {'name': 'csu7700.csv', 'url': 'https://apl.czso.cz/iSMS/cisexp.jsp?kodcis=7700&typdat=0&cisvaz=184_1260&datpohl=03.11.2021&cisjaz=203&format=2&separator=%2C'},
 
     # CSU - obyvatelstvo a umrti po skupinach obyvatel a uzemnich celcich
     {'name': 'kraj-okres-obyvatelstvo.csv', 'url': 'https://www.czso.cz/documents/62353418/143522504/130142-21data043021.csv/760fab9c-d079-4d3a-afed-59cbb639e37d?version=1.1'},
@@ -72,7 +73,8 @@ DATA: List[dict] = [
     {'name': 'jihomoravsky.xlsx', 'url': 'https://www.czso.cz/documents/11280/17803643/vu06.xlsx/57579f26-b5b5-4512-af06-2c2f27086cae?version=1.21'}, # https://www.czso.cz/csu/xb/vybrane_udaje_za_spravni_obvody_orp_
     {'name': 'olomoucky.xlsx', 'url': 'https://www.czso.cz/documents/10180/141885135/33009721q1r06.xlsx/47b4ad4d-29e7-416e-964e-e7b34f170425?version=1.1'}, # https://www.czso.cz/csu/xm/vybrane-udaje-o-so-orp-v-roce-2020
     {'name': 'moravskoslezsky.xlsx', 'url': 'https://www.czso.cz/documents/10180/142044384/33010121q1r06.xlsx/91ec1d18-64c8-4d5f-8df7-94d0c3c4110c?version=1.0'}, # https://www.czso.cz/csu/czso/r-spravni-obvody-obci-s-rozsirenou-pusobnosti-so-orp-moravskoslezskeho-kraje-kdvejpiwwn
-    {'name': 'zlinsky.xlsx', 'url': 'https://www.czso.cz/documents/11284/17856167/33009921q1r06.xlsx/fec57ec5-a8de-4781-b418-ab6ec85b9728?version=1.1'} # https://www.czso.cz/csu/xz/vybrane_udaje_za_spravni_obvody_orp
+    {'name': 'zlinsky.xlsx', 'url': 'https://www.czso.cz/documents/11284/17856167/33009921q1r06.xlsx/fec57ec5-a8de-4781-b418-ab6ec85b9728?version=1.1'}, # https://www.czso.cz/csu/xz/vybrane_udaje_za_spravni_obvody_orp
+    {'name': 'orp-populace.csv', 'url': 'https://www.czso.cz/documents/62353418/143520482/130181-21data043021.csv/9dc72375-de2c-4aea-b18d-85d18f3639d8?version=1.1'}
 ]
 
 def ensure_folder(path: str) -> None:

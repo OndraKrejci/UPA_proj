@@ -75,7 +75,7 @@ class ORP:
     @staticmethod
     def create_orp_kraje_vazba_json() -> dict:
         orp_zkracene = ORP.load_orp_zkracene()
-        with open('%s/%s' % (DATA_PATH, 'vazba-orp-kraj-nuts.csv'), 'r', encoding='windows-1250') as file:
+        with open('%s/%s' % (DATA_PATH, 'vazba-orp-kraj.csv'), 'r', encoding='windows-1250') as file:
             header = [
                 'KODJAZ',
                 'TYPVAZ',
@@ -94,10 +94,11 @@ class ORP:
             orp_data = {}
             for line in reader:
                 orp_kod = int(line['orp_kod'])
+                kraj_kod = int(line['kraj_kod'])
                 orp_data[orp_kod] = {
                     'nazev': line['orp_nazev'],
                     'zkraceny_nazev': orp_zkracene[orp_kod],
-                    'kraj_kod': line['kraj_kod'],
+                    'kraj_kod': kraj_kod,
                     'kraj_nazev': line['kraj_nazev']
                 }
 
@@ -126,6 +127,12 @@ class ORP:
     def get_orp_nazev(self, kod: int) -> Union[str, None]:
         if kod in self.orp:
             return self.orp[kod]['nazev']
+
+        return None
+
+    def get_kraj_kod(self, kod: int) -> Union[int, None]:
+        if kod in self.orp:
+            return self.orp[kod]['kraj_kod']
 
         return None
 
@@ -184,3 +191,20 @@ class Kraje:
             return self.kody[kod]['nuts']
 
         return None
+
+def get_csu7700_ciselnik() -> dict:
+    with open('%s/%s' % (DATA_PATH, 'csu7700.csv'), 'r', encoding='windows-1250') as file:
+        reader = csv.DictReader(file)
+        vek_kody = {}
+        for line in reader:
+            if (
+                (
+                    line['MIN_OSTRY'] is not None and line['MAX_TUPY'] is not None
+                    and line['MIN_OSTRY'].isnumeric() and line['MAX_TUPY'].isnumeric()
+                    and int(line['MIN_OSTRY']) < 100
+                    and ((int(line['MIN_OSTRY']) + 1) == int(line['MAX_TUPY']))
+                ) or line['CHODNOTA'] == '420100799999000'
+            ):
+                vek_kody[int(line['MIN_OSTRY'])] = line['CHODNOTA']
+
+        return vek_kody
