@@ -556,7 +556,30 @@ class DBC:
 
                 document.append(self.create_record_obyvatele_orp2(data, orp_kod, nuts_kod))
 
-        coll.insert_many(document)
+        pprint(document)
+        document = sorted(document, key=lambda x: (x['casref_do'], x['orp_kod'], x['pohlavi_kod']))
+        l = []
+        i = {'casref_do': document[0]['casref_do'],
+            'orp_kod' : document[0]['orp_kod'],
+            'kraj_nuts_kod' : document[0]['kraj_nuts_kod'],
+            'orp_nazev' : document[0]['orp_nazev'],
+            'pohlavi_kod' : document[0]['pohlavi_kod']
+            }
+        for data in document:
+            if data['casref_do'] == i['casref_do'] and data['orp_kod'] == i['orp_kod'] and data['pohlavi_kod'] == i['pohlavi_kod']:
+                i[data['vek_kod']] = data['pocet']
+            else:
+                l.append(i)
+                i = {}
+                i = {'casref_do': data['casref_do'],
+                    'orp_kod' : data['orp_kod'],
+                    'kraj_nuts_kod' : data['kraj_nuts_kod'],
+                    'orp_nazev' : data['orp_nazev'],
+                    'pohlavi_kod' : data['pohlavi_kod']
+                    }
+        l.append(i)
+
+        coll.insert_many(l)
 
     def create_record_obyvatele_orp2(self, data: OrderedDict, orp_kod, nuts_kod) -> dict:
         return {
