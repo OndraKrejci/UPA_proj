@@ -16,7 +16,7 @@ from dateutil import parser as DateParser
 from typing import Union
 
 from download import DATA_PATH
-from ciselniky import UZEMI_KRAJ, Kraje, ORP
+from ciselniky import UZEMI_KRAJ, Kraje, ORP, get_csu7700_ciselnik
 
 from collections import OrderedDict
 
@@ -556,7 +556,7 @@ class DBC:
 
                 document.append(self.create_record_obyvatele_orp2(data, orp_kod, nuts_kod))
 
-        pprint(document)
+        cis = get_csu7700_ciselnik()
         document = sorted(document, key=lambda x: (x['casref_do'], x['orp_kod'], x['pohlavi_kod']))
         l = []
         i = {'casref_do': document[0]['casref_do'],
@@ -565,18 +565,50 @@ class DBC:
             'orp_nazev' : document[0]['orp_nazev'],
             'pohlavi_kod' : document[0]['pohlavi_kod']
             }
+        m = {}
         for data in document:
             if data['casref_do'] == i['casref_do'] and data['orp_kod'] == i['orp_kod'] and data['pohlavi_kod'] == i['pohlavi_kod']:
-                i[data['vek_kod']] = data['pocet']
+                m[data['vek_kod']] = data['pocet']
             else:
+                summ = 0
+                for j in range(0, 15):
+                    if cis[j] in m:
+                        summ += m[cis[j]]
+                i['0-14'] = summ
+                summ = 0
+                for j in range(15, 60):
+                    if cis[j] in m:
+                        summ += m[cis[j]]
+                i['15-59'] = summ
+                summ = 0
+                for j in range(60, 100):
+                    if cis[j] in m:
+                        summ += m[cis[j]]
+                i['60+'] = summ
                 l.append(i)
                 i = {}
+                m = {}
                 i = {'casref_do': data['casref_do'],
                     'orp_kod' : data['orp_kod'],
                     'kraj_nuts_kod' : data['kraj_nuts_kod'],
                     'orp_nazev' : data['orp_nazev'],
                     'pohlavi_kod' : data['pohlavi_kod']
                     }
+        summ = 0
+        for j in range(0, 15):
+            if cis[j] in m:
+                summ += m[cis[j]]
+        i['0-14'] = summ
+        summ = 0
+        for j in range(15, 60):
+            if cis[j] in m:
+                summ += m[cis[j]]
+        i['15-59'] = summ
+        summ = 0
+        for j in range(60, 100):
+            if cis[j] in m:
+                summ += m[cis[j]]
+        i['60+'] = summ
         l.append(i)
 
         coll.insert_many(l)
