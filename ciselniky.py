@@ -1,3 +1,9 @@
+##
+# @file ciselniky.py
+# @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
+# Subject: UPA - Data Storage and Preparation
+# @date: 11/2021
+
 
 import csv
 
@@ -120,7 +126,7 @@ class ORP:
     def get_orp_nazev(self, kod: int) -> Union[str, None]:
         if kod in self.orp:
             return self.orp[kod]['nazev']
-        
+
         return None
 
 class Kraje:
@@ -143,7 +149,7 @@ class Kraje:
         'CZ072': 'Zlínský kraj',
         'CZ080': 'Moravskoslezský kraj'
     }
-    
+
     @staticmethod
     def load_kraje_ciselnik() -> dict:
         with open('%s/%s' % (DATA_PATH, 'kraj-ciselnik.csv'), 'r', encoding='windows-1250') as file:

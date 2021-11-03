@@ -1,3 +1,9 @@
+##
+# @file invalid_orp.py
+# @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
+# Subject: UPA - Data Storage and Preparation
+# @date: 11/2021
+# Invalid ORP code detection
 
 import json
 
@@ -12,7 +18,7 @@ orp_helper = ORP()
 
 def invalid_orp_ockovani():
     global orp_helper
-    
+
     with open('%s/%s' % (DATA_PATH, 'orp-ockovani-geografie.json'), 'r', encoding='utf-8') as file:
         datalist = json.load(file)['data']
 

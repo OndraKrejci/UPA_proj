@@ -1,3 +1,10 @@
+##
+# @file merge.py
+# @author Oliver Kuník xkunik00@stud.fit.vutbr.cz
+# Subject: UPA - Data Storage and Preparation
+# @date: 11/2021
+# Merge two lists of dicts by key(s)
+
 def mergeListsByKey(l1, l2, key):
     """Merge two lists by key value
         Usage:

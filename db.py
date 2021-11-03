@@ -1,3 +1,10 @@
+##
+# @file main.py
+# @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
+# @author Oliver Kuník xkunik00@stud.fit.vutbr.cz
+# Subject: UPA - Data Storage and Preparation
+# @date: 11/2021
+# Parse downloaded data and imports them to DB
 
 import pymongo
 
@@ -273,7 +280,7 @@ class DBC:
                 nakazeni += data['kumulativni_pocet_nakazenych']
                 vyleceni += data['kumulativni_pocet_vylecenych']
                 umrti += data['kumulativni_pocet_umrti']
-        
+
         nakazeni_vyleceni_umrti_merged.append({
             "datum": datum,
             "kraj_nuts_kod": kraj,
@@ -339,7 +346,7 @@ class DBC:
                 pocet = data['pocet_davek']
             else:
                 pocet += data['pocet_davek']
-        
+
         ockovani_merged.append({
             "datum": datum,
             "kraj_nuts_kod": nuts,
@@ -514,7 +521,7 @@ class DBC:
                   document.append(self.create_record_umrti_cr(data, casref_od))
 
         coll.insert_many(document)
-    
+
     def create_record_umrti_cr(self, data: OrderedDict, casref_od) -> dict:
         return {
             'pocet': int(data['hodnota']) if data['hodnota'] else None,

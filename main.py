@@ -1,3 +1,9 @@
+##
+# @file main.py
+# @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
+# Subject: UPA - Data Storage and Preparation
+# @date: 11/2021
+# Downloads data and imports them to DB
 
 import argparse
 import sys
