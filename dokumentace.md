@@ -14,12 +14,12 @@ Propojení mezi daty je možné přes územní celky použitím jejich identifik
 
 Data o počtech obyvatel jsou dostupná z datové sady ČSÚ *Obyvatelstvo podle pětiletých věkových skupin a pohlaví v krajích a okresech* (https://www.czso.cz/csu/czso/obyvatelstvo-podle-petiletych-vekovych-skupin-a-pohlavi-v-krajich-a-okresech). Datová sada je dostupná ve formátu csv a obsahuje počty obyvatel v každém roce rozdělené do skupin po 5 letech. Datová sada obsahuje data rozdělená podle pohlaví a územních celků (okresy, kraje, ČR). Typ hodnoty v řádku je určen hodnotami atributů identifikujícími věkovou skupinu, pohlaví a územní celek. Pro práci s daty bude nutné převzít identifikátory potřebných územních celků a věkových skupin. Také je dostupná datová sada o úmrtích za celou Českou republiku rozdělených do věkových skupin po týdnech.
 
-Z ČSÚ je dále možné získat data o vazbě ORP na kraje (https://apl.czso.cz/iSMS/cisdata.jsp?kodcis=65), ale jak již bylo zmíněno, hodnoty identifikátorů ORP v datových sadách COVID-19 ne vždy odpovídají číselníku ORP. V datové sadě obyvatelstva není pro identifikaci krajů použit kód NUTS, proto je potřebný i číselník krajů ČSŮ. Z ČSÚ lze pro jednotlivé kraje také získat rozložení obyvatelstva podle věku pro územní celky ve formátu xlsx, např. zde https://www.czso.cz/csu/xs/vekove_slozeni_obyvatelstva_stc_kraje pro Středočeský kraj.
+Z ČSÚ je dále možné získat data o vazbě ORP na kraje (https://apl.czso.cz/iSMS/cisdata.jsp?kodcis=65), ale jak již bylo zmíněno, hodnoty identifikátorů ORP v datových sadách COVID-19 ne vždy odpovídají číselníku ORP. V datové sadě obyvatelstva není pro identifikaci krajů použit kód NUTS, proto je potřebný i číselník krajů ČSŮ. Dostupná je také populace jednotlivých ORP ve skupinách podle věku (https://www.czso.cz/csu/czso/obyvatelstvo-podle-jednotek-veku-a-pohlavi-ve-spravnich-obvodech-obci-s-rozsirenou-pusobnosti).
 
 ## Databáze a popis řešení
 Pro uložení dat jsme zvolili databázi MongoDB, jelikož bude pro účely projektu nutné uložit velké množství různorodých dat. Nad daty se následně budou provádět dotazy pro získání jejich hodnot podle územních celků a času a případně se budou dále agregovat. Použití MongoDB je dále vhodné, jelikož většina primárních dat je ve formátu JSON, který může s drobnými úpravami být rovnou uložen do databáze. Další datové sady ve formátu csv je možné upravit a převést do JSON dokumentů a do databáze je možné uložit i libovolné další dokumenty, pokud by to bylo nutné.
 
-Pro stažení a zpracování dat používáme skript v jazyce Python, který umožňuje snadné stažení dat ze zadaných url a následně jejich zpracování pomocí modulů `json`, `csv` a `openpyxl`. Pro práci s databází je použit modul `pymongo`. Skript stáhne všechna potřebná data a vytvoří jednotlivé kolekce z jednotlivých nebo sloučených datových sad, pro které provede další případné úpravy nebo výpočty hodnot.
+Pro stažení a zpracování dat používáme skript v jazyce Python, který umožňuje snadné stažení dat ze zadaných url a následně jejich zpracování pomocí modulů `json` a `csv`. Pro práci s databází je použit modul `pymongo`. Skript stáhne všechna potřebná data a vytvoří jednotlivé kolekce z jednotlivých nebo sloučených datových sad, pro které provede další případné úpravy nebo výpočty hodnot.
 
 Výběr datových sad a jejich případné spojování nebo slučování jejich hodnot provádíme primárně podle potřeb zvolených dotazů pro další část projektu. Ukládáme ale i další datové sady, pro potenciální využití u vlastních dotazů, ze stejného důvodu ponecháváme ve vytvářených kolekcích i hodnoty atributů, které nejsou nutně potřebné.
 
@@ -65,7 +65,7 @@ Pro tuto úlohu jsou potřebná data o přírůstcích nakažených a provedený
 
 Na úrovni ORP ale nejsou dostupné údaje o přírůstcích nakažených, datová sada `orp.json` obsahuje pouze hodnoty za celé týdny a počet aktuálně nakažených. Potřebná data jsem tak získali sloučením hodnot pro obce.
 
-Dále jsou potřebná data o populaci jednotlivých ORP rozdělených do věkových kategorií. Tato data jsme získali z tabulek počtu obyvatel ORP podle pětiletých věkových skupin z ČSÚ  pro jednotlivé kraje.
+Dále jsou potřebná data o populaci jednotlivých ORP rozdělených do věkových kategorií, která jsou dostupná z datové sady ČSÚ *Obyvatelstvo podle jednotek věku a pohlaví ve správních obvodech obcí s rozšířenou působností*.
 
 ## Vytvořené kolekce
 * obyvatelstvo_kraj

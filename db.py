@@ -22,8 +22,6 @@ from collections import OrderedDict
 
 from merge import mergeListsByKey, mergeListsByTwoKeys
 
-from xls import get_obyvatelia_orp
-
 class DBC:
     DB_NAME = 'covid'
     DEFAULT_HOST = 'localhost'
@@ -503,10 +501,6 @@ class DBC:
             'testy_7': data.get('testy_7', None)
         }
 
-    def create_collection_obyvatele_orp(self) -> None:
-        coll = self.get_collection('obyvatele_orp')
-        coll.insert_many(get_obyvatelia_orp(DATA_PATH))
-
     def create_collection_umrti_cr(self) -> None:
         coll = self.get_collection('umrti_cr')
 
@@ -532,8 +526,8 @@ class DBC:
             'priznak': data['priznak']
         }
 
-    def create_collection_obyvatele_orp2(self) -> None:
-        coll = self.get_collection('obyvatele_orp2')
+    def create_collection_obyvatele_orp(self) -> None:
+        coll = self.get_collection('obyvatele_orp')
 
         orp = ORP()
         kraje = Kraje()
@@ -554,7 +548,7 @@ class DBC:
                     if kraj_kod:
                         nuts_kod = kraje.get_nuts(kraj_kod)
 
-                document.append(self.create_record_obyvatele_orp2(data, orp_kod, nuts_kod))
+                document.append(self.create_record_obyvatele_orp(data, orp_kod, nuts_kod))
 
         cis = get_csu7700_ciselnik()
         document = sorted(document, key=lambda x: (x['casref_do'], x['orp_kod'], x['pohlavi_kod']))
@@ -613,7 +607,7 @@ class DBC:
 
         coll.insert_many(l)
 
-    def create_record_obyvatele_orp2(self, data: OrderedDict, orp_kod, nuts_kod) -> dict:
+    def create_record_obyvatele_orp(self, data: OrderedDict, orp_kod, nuts_kod) -> dict:
         return {
             'pocet': int(data['hodnota']) if data['hodnota'] else None,
             'pohlavi_kod': int(data['pohlavi_kod']) if data['pohlavi_kod'] else '', # 1=muz, 2=zena
@@ -639,7 +633,6 @@ class DBC:
         self.create_collection_nakazeni_hospitalizovani_orp()
         self.create_collection_obyvatele_orp()
         self.create_collection_umrti_cr()
-        self.create_collection_obyvatele_orp2()
 
 if __name__ == '__main__':
     dbc = DBC()
