@@ -6,9 +6,11 @@
 # Retrieve required data from DB and create CSV files
 
 import csv
+from datetime import datetime
 import sys
 
 from dateutil import parser as DateParser
+from dateutil.relativedelta import relativedelta
 from io import TextIOWrapper
 
 from typing import List
@@ -20,9 +22,7 @@ from ciselniky import Kraje
 class CSVCreator():
     OUT_PATH = 'data_csv/'
 
-    QUERY_A1_GT_DATE = DateParser.parse('2020-03-31')
-
-    QUERY_B1_GT_DATE = QUERY_A1_GT_DATE
+    QUERY_B1_GT_DATE = DateParser.parse('2020-03-31')
     QUERY_B1_LT_DATE = DateParser.parse('2021-04-02')
 
     CTVRTLETI = [
@@ -39,49 +39,25 @@ class CSVCreator():
     def query_A1(self) -> None:
         coll = self.dbc.get_collection('covid_po_dnech_cr')
 
-        pipeline = [
-            {
-                '$match': {
-                    'datum': {'$gt': self.QUERY_A1_GT_DATE}
-                }
-            },
-            {
-                '$project': {
-                    'datum': True,
-                    'nakazeni': '$prirustkovy_pocet_nakazenych',
-                    'vyleceni': '$prirustkovy_pocet_vylecenych',
-                    'hospitalizovani': '$pacient_prvni_zaznam',
-                    'testy': '$prirustkovy_pocet_provedenych_testu'
-                }
-            },
-            {
-                '$sort': {'datum': 1}
-            }
-        ]
-        cursor = coll.aggregate(pipeline)
-
         header = ['datum', 'nakazeni', 'vyleceni', 'hospitalizovani', 'testy']
+        month = relativedelta(months=1)
+        dt = DateParser.parse('2020-04-1')
+        dt_now = datetime.now()
         with self.csv_open('covid_po_mesicich') as file:
             writer = self.get_csv_writer(file, header)
-            self.write_query_A1_data(cursor, writer)
 
-    def write_query_A1_data(self, cursor, writer) -> int:
-        count = 0
-        last_datum = self.QUERY_A1_GT_DATE
-        for doc in cursor:
-            if last_datum.month != doc['datum'].month:
-                writer.writerow([
-                    doc['datum'],
-                    doc['nakazeni'],
-                    doc['vyleceni'],
-                    doc['hospitalizovani'],
-                    doc['testy']
-                ])
-                count += 1
+            while dt < dt_now:
+                doc = coll.find_one({'datum': {'$eq': dt}})
+                if doc:
+                    writer.writerow([
+                        doc['datum'],
+                        doc['prirustkovy_pocet_nakazenych'],
+                        doc['prirustkovy_pocet_vylecenych'],
+                        doc['pacient_prvni_zaznam'],
+                        doc['prirustkovy_pocet_provedenych_testu']
+                    ])
 
-            last_datum = doc['datum']
-
-        return count
+                dt += month
 
     def query_A2(self) -> None:
         coll = self.dbc.get_collection('nakazeni_vek_okres_kraj')
@@ -199,4 +175,4 @@ if __name__ == '__main__':
     creator = CSVCreator()
     #creator.create_all_csv_files()
 
-    creator.query_B1()
+    creator.query_A1()
