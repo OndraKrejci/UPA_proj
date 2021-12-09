@@ -19,6 +19,10 @@ from db import DBC
 from download import ensure_folder
 from ciselniky import Kraje
 
+class CSVCreatorException(Exception):
+    def __init__(self, message: str = ''):
+        super().__init__(message)
+
 class CSVCreator():
     OUT_PATH = 'data_csv/'
 
@@ -37,7 +41,8 @@ class CSVCreator():
         self.kraje = Kraje()
     
     def query_A1(self) -> None:
-        coll = self.dbc.get_collection('covid_po_dnech_cr')
+        coll_name = 'covid_po_dnech_cr'
+        coll = self.dbc.get_collection(coll_name)
 
         header = ['datum', 'nakazeni', 'vyleceni', 'hospitalizovani', 'testy']
         month = relativedelta(months=1)
@@ -56,6 +61,11 @@ class CSVCreator():
                         doc['pacient_prvni_zaznam'],
                         doc['prirustkovy_pocet_provedenych_testu']
                     ])
+                else:
+                    if dt > dt_now:
+                        break
+                    else:
+                        raise CSVCreatorException('Nepodařilo se načíst data z kolekce "%s" pro datum %s' % (coll_name, dt))
 
                 dt += month
 
