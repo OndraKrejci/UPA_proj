@@ -192,6 +192,10 @@ class Kraje:
 
         return None
 
+    @staticmethod
+    def get_nazev(nuts: str) -> Union[str, None]:
+        return Kraje.NUTS3.get(nuts, None)
+
 def get_csu7700_ciselnik() -> dict:
     with open('%s/%s' % (DATA_PATH, 'csu7700.csv'), 'r', encoding='windows-1250') as file:
         reader = csv.DictReader(file)
