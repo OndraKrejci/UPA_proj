@@ -6,13 +6,12 @@
 # Retrieve required data from DB and create CSV files
 
 import csv
-from datetime import datetime
 import sys
 
+from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
 from io import TextIOWrapper
-
 from typing import List
 
 from db import DBC
@@ -25,16 +24,6 @@ class CSVCreatorException(Exception):
 
 class CSVCreator():
     OUT_PATH = 'data_csv/'
-
-    QUERY_B1_GT_DATE = DateParser.parse('2020-03-31')
-    QUERY_B1_LT_DATE = DateParser.parse('2021-04-02')
-
-    CTVRTLETI = [
-        (DateParser.parse('2020-04-01'), DateParser.parse('2020-07-01')),
-        (DateParser.parse('2020-07-01'), DateParser.parse('2020-10-01')),
-        (DateParser.parse('2020-10-01'), DateParser.parse('2021-01-01')),
-        (DateParser.parse('2021-01-01'), DateParser.parse('2021-04-01'))
-    ]
 
     def __init__(self) -> None:
         self.dbc = DBC()
@@ -65,7 +54,7 @@ class CSVCreator():
                     if dt > dt_now:
                         break
                     else:
-                        raise CSVCreatorException('Nepodařilo se načíst data z kolekce "%s" pro datum %s' % (coll_name, dt))
+                        raise CSVCreatorException('Failed to retrieve data from collection "%s" for date %s' % (coll_name, dt))
 
                 dt += month
 
@@ -104,13 +93,18 @@ class CSVCreator():
     def query_B1(self) -> None:
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
+        pocet_ctvrtleti = 4
+        dt = DateParser.parse('2020-04-01')
+        months3 = relativedelta(months=3)
+        dates = [dt]
+        for _ in range(pocet_ctvrtleti):
+            dt += months3
+            dates.append(dt)
+
         pipeline = [
             {
                 '$match': {
-                    '$and': [
-                        {'datum': {'$gt': self.QUERY_B1_GT_DATE}},
-                        {'datum': {'$lt': self.QUERY_B1_LT_DATE}}
-                    ]
+                    'datum': {'$in': dates}
                 }
             },
             {
@@ -129,31 +123,37 @@ class CSVCreator():
         header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'nakazeni']
         with self.csv_open('prirustky_kraj') as file:
             writer = self.get_csv_writer(file, header)
-            self.write_query_B1_data(cursor, writer)
+            rows = self.write_query_B1_data(cursor, writer)
+
+        expected = (len(Kraje.NUTS3) * pocet_ctvrtleti)
+        if rows != expected:
+            raise CSVCreatorException(
+                'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
+            )
 
     def write_query_B1_data(self, cursor, writer) -> int:
+        doc = cursor.next()
         count = 0
-        nakazeni_prirustek = 0
-        prirustek_zacatek = 0
-        zacatek, konec = self.CTVRTLETI[0]
+        prirustek_zacatek = doc['kumulativni_pocet_nakazenych']
+        nuts = doc['kraj_nuts_kod']
+        zacatek = doc['datum']
         for doc in cursor:
-            if doc['datum'] == konec:
-                nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - nakazeni_prirustek
+            if nuts == doc['kraj_nuts_kod']:
                 nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - prirustek_zacatek
                 writer.writerow([
                     zacatek,
-                    konec,
+                    doc['datum'],
                     doc['kraj_nuts_kod'],
                     self.kraje.get_nazev(doc['kraj_nuts_kod']),
                     nakazeni_prirustek
                 ])
 
                 count += 1
-                zacatek, konec = self.CTVRTLETI[count % len(self.CTVRTLETI)]
+            else:
+                nuts = doc['kraj_nuts_kod']
 
-            if doc['datum'] == zacatek:
-                nakazeni_prirustek = doc['kumulativni_pocet_nakazenych']
-                prirustek_zacatek = doc['kumulativni_pocet_nakazenych']
+            zacatek = doc['datum']
+            prirustek_zacatek = doc['kumulativni_pocet_nakazenych']
 
         return count
 
@@ -185,4 +185,4 @@ if __name__ == '__main__':
     creator = CSVCreator()
     #creator.create_all_csv_files()
 
-    creator.query_A1()
+    creator.query_B1()
