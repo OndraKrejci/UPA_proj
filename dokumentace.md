@@ -51,7 +51,7 @@ Dotaz vyžaduje počty nakažených osob v jednotlivých krajích. Tato data jso
 Sestavte 4 žebříčky krajů "best in covid" za poslední 4 čtvrtletí (1 čtvrtletí = 1 žebříček). Jako kritérium volte počet nově nakažených přepočtený na jednoho obyvatele kraje. Pro jedno čtvrtletí zobrazte výsledky také graficky. Graf bude pro každý kraj zobrazovat celkový počet nově nakažených, celkový počet obyvatel a počet nakažených na jednoho obyvatele. Graf můžete zhotovit kombinací dvou grafů do jednoho (jeden sloupcový graf zobrazí první dvě hodnoty a druhý, čárový graf, hodnotu třetí).
 ```
 
-Zde jsou potřebné přírůstky nakažených pro jednotlivé kraje, pro účely přepočtu jsou také potřebné počty obyvatel krajů (jednotlivé hodnoty). Přírůstky nakažených pro jednotlivé kraje je možné získat ze sady `kraj-okres-nakazeni-vyleceni-umrti.json` obsahující kumulativní hodnoty pro nakažených podle okresů s informací o krajích. Jako počet obyvatel je možné použít nejnovější hodnoty pro daný kraj z datové sady ČSÚ *Obyvatelstvo podle pětiletých věkových skupin a pohlaví v krajích a okresech*.
+Zde jsou potřebné přírůstky nakažených pro jednotlivé kraje, pro účely přepočtu jsou také potřebné počty obyvatel krajů (jednotlivé hodnoty). Přírůstky nakažených pro jednotlivé kraje je možné získat ze sady `kraj-okres-nakazeni-vyleceni-umrti.json` obsahující kumulativní hodnoty nakažených podle okresů s informací o krajích. Jako počet obyvatel je možné použít nejnovější hodnoty pro daný kraj z datové sady ČSÚ *Obyvatelstvo podle pětiletých věkových skupin a pohlaví v krajích a okresech*.
 
 ### Dotaz C1
 ```
