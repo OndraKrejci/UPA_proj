@@ -179,7 +179,10 @@ class CSVCreator():
         return count
 
     def query_C1(self) -> None:
-        pass
+        orps = self.get_most_populous_ORPs()
+
+        for orp in orps:
+            pass
 
     def get_most_populous_ORPs(self, limit: int = 50) -> List[dict]:
         coll = self.dbc.get_collection('obyvatele_orp')
@@ -189,6 +192,9 @@ class CSVCreator():
                 '$project': {
                     'orp_kod': True,
                     'orp_nazev': True,
+                    '0-14': True,
+                    '15-59': True,
+                    '60+': True,
                     'populace': {'$sum': [
                         '$0-14',
                         '$15-59',
@@ -200,7 +206,10 @@ class CSVCreator():
                 '$group': {
                     '_id': '$orp_kod',
                     'orp_nazev': {'$first': '$orp_nazev'},
-                    'populace': {'$sum': '$populace'}
+                    'populace': {'$sum': '$populace'},
+                    '0-14': {'$sum': '$0-14'},
+                    '15-59': {'$sum': '$15-59'},
+                    '60+': {'$sum': '$60+'}
                 }
             },
             {
@@ -258,6 +267,6 @@ class CSVCreator():
 if __name__ == '__main__':
     creator = CSVCreator()
     ensure_folder(creator.OUT_PATH)
-    creator.create_all_csv_files()
+    #creator.create_all_csv_files()
 
     #creator.query_B1()
