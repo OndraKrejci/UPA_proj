@@ -11,8 +11,8 @@ import sys
 from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
-from io import TextIOWrapper
 from typing import List
+from io import TextIOWrapper
 
 from db import DBC
 from download import ensure_folder
@@ -33,30 +33,57 @@ class CSVCreator():
         coll_name = 'covid_po_dnech_cr'
         coll = self.dbc.get_collection(coll_name)
 
-        header = ['datum', 'nakazeni', 'vyleceni', 'hospitalizovani', 'testy']
+        header = ['zacatek', 'konec', 'nakazeni', 'vyleceni', 'hospitalizovani', 'testy']
         month = relativedelta(months=1)
+        day = relativedelta(days=1)
         dt = DateParser.parse('2020-04-1')
         dt_now = datetime.now()
         with self.csv_open('covid_po_mesicich') as file:
             writer = self.get_csv_writer(file, header)
 
             while dt < dt_now:
-                doc = coll.find_one({'datum': {'$eq': dt}})
+                next_dt = dt + month
+                month_end = next_dt - day
+
+                pipeline = [
+                    {
+                        '$match': {
+                            '$and': [
+                                {'datum': {'$gte': dt}},
+                                {'datum': {'$lte': month_end}}
+                            ]
+                        }
+                    },
+                    {
+                        '$sort': {'datum': 1}
+                    },
+                    {
+                        '$group': {
+                            '_id': None,
+                            'nakazeni': {'$sum': '$prirustkovy_pocet_nakazenych'},
+                            'vyleceni': {'$sum': '$prirustkovy_pocet_vylecenych'},
+                            'hospitalizovani': {'$sum': '$pacient_prvni_zaznam'},
+                            'testy': {'$sum': '$prirustkovy_pocet_provedenych_testu'},
+                        }
+                    }
+                ]
+                cursor = coll.aggregate(pipeline)
+                doc = cursor.next()
                 if doc:
                     writer.writerow([
-                        doc['datum'],
-                        doc['prirustkovy_pocet_nakazenych'],
-                        doc['prirustkovy_pocet_vylecenych'],
-                        doc['pacient_prvni_zaznam'],
-                        doc['prirustkovy_pocet_provedenych_testu']
+                        dt,
+                        month_end,
+                        doc['nakazeni'],
+                        doc['vyleceni'],
+                        doc['hospitalizovani'],
+                        doc['testy']
                     ])
                 else:
-                    if dt > dt_now:
-                        break
-                    else:
-                        raise CSVCreatorException('Failed to retrieve data from collection "%s" for date %s' % (coll_name, dt))
+                    raise CSVCreatorException(
+                        'Failed to retrieve data from collection "%s" for month beginning with %s' % (coll_name, dt)
+                    )
 
-                dt += month
+                dt = next_dt
 
     def query_A2(self) -> None:
         coll = self.dbc.get_collection('nakazeni_vek_okres_kraj')
@@ -183,6 +210,7 @@ class CSVCreator():
 
 if __name__ == '__main__':
     creator = CSVCreator()
+    ensure_folder(creator.OUT_PATH)
     #creator.create_all_csv_files()
 
-    creator.query_B1()
+    creator.query_A1()
