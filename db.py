@@ -7,19 +7,18 @@
 # Parse downloaded data and imports them to DB
 
 import pymongo
-
 import sys
 import json
 import csv
+
 from dateutil import parser as DateParser
 
 from typing import Union
+from collections import OrderedDict
+from pymongo.collection import Collection
 
 from download import DATA_PATH
 from ciselniky import UZEMI_KRAJ, Kraje, ORP, get_csu7700_ciselnik
-
-from collections import OrderedDict
-
 from merge import mergeListsByKey, mergeListsByTwoKeys
 
 class DBC:
@@ -52,7 +51,7 @@ class DBC:
     def delete_db(self) -> None:
         self.conn.drop_database(DBC.DB_NAME)
 
-    def get_collection(self, name: str, drop: bool = False):
+    def get_collection(self, name: str, drop: bool = False) -> Collection:
         coll = self.db[name]
 
         if drop:
@@ -636,4 +635,4 @@ class DBC:
 
 if __name__ == '__main__':
     dbc = DBC()
-    dbc.create_all_collections()
+    #dbc.create_all_collections()
