@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
-from typing import List
+from typing import List, Tuple
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
 
@@ -184,6 +184,61 @@ class CSVCreator():
         for orp in orps:
             pass
 
+    def get_ORP_infected_vaccinations(self, orp_code: int, start: datetime, end: datetime) -> Tuple[int, int]:
+        coll = self.dbc.get_collection('nakazeni_orp')
+        pipeline = [
+            {
+                '$match': {
+                    '$and': [
+                        {'orp_kod': {'$eq': orp_code}},
+                        {'datum': {'$gte': start}},
+                        {'datum': {'$lte': end}}
+                    ]
+                }
+            },
+            {
+                '$group': {
+                    '_id': None,
+                    'nakazeni': {'$sum': '$nove_pripady'}
+                }
+            }
+        ]
+        cursor = coll.aggregate(pipeline)
+        doc_infected = cursor.next()
+
+        if not doc_infected:
+            raise CSVCreatorException(
+                'Failed to retrieve infection data for ORP %i %s-%s' % (orp_code, start, end)
+            )
+
+        coll = self.dbc.get_collection('ockovani_orp')
+        pipeline = [
+            {
+                '$match': {
+                    '$and': [
+                        {'orp_kod': {'$eq': orp_code}},
+                        {'datum': {'$gte': start}},
+                        {'datum': {'$lte': end}}
+                    ]
+                }
+            },
+            {
+                '$group': {
+                    '_id': None,
+                    'pocet_davek': {'$sum': '$pocet_davek'}
+                }
+            }
+        ]
+        cursor = coll.aggregate(pipeline)
+        doc_vaccinations = cursor.next()
+
+        if not doc_vaccinations:
+            raise CSVCreatorException(
+                'Failed to retrieve vaccination data for ORP %i %s-%s' % (orp_code, start, end)
+            )
+
+        return (doc_infected['nakazeni'], doc_vaccinations['pocet_davek'])
+
     def get_most_populous_ORPs(self, limit: int = 50) -> List[dict]:
         coll = self.dbc.get_collection('obyvatele_orp')
 
@@ -269,4 +324,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     #creator.create_all_csv_files()
 
-    #creator.query_B1()
+    creator.query_B1()
