@@ -17,7 +17,8 @@ from pymongo.command_cursor import CommandCursor
 
 from db import DBC
 from download import ensure_folder
-from ciselniky import Kraje
+from ciselniky import ORP, Kraje
+from invalid_orp import OCKOVANI
 
 class CSVCreatorException(Exception):
     def __init__(self, message: str = ''):
@@ -29,6 +30,7 @@ class CSVCreator():
     def __init__(self) -> None:
         self.dbc = DBC()
         self.kraje = Kraje()
+        self.orp = ORP()
     
     def query_A1(self) -> None:
         coll_name = 'covid_po_dnech_cr'
@@ -179,10 +181,36 @@ class CSVCreator():
         return count
 
     def query_C1(self) -> None:
-        orps = self.get_most_populous_ORPs()
+        orps = self.map_to_invalid_ORP_codes(self.get_most_populous_ORPs())
+        quarters = 4
+        dates = self.get_quarters_dates(DateParser.parse('2020-10-01'), quarters)
 
-        for orp in orps:
-            pass
+        count = 0
+        header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
+        with self.csv_open('orp_ctvrtleti') as file:
+            writer = self.get_csv_writer(file, header)
+            for orp in orps:
+                for i in range(quarters):
+                    pos = i * 2
+                    infected, vaccinations = self.get_ORP_infected_vaccinations(orp['orp_kod'], dates[pos], dates[pos + 1])
+                    writer.writerow([
+                        dates[pos],
+                        dates[pos + 1],
+                        orp['orp_kod'],
+                        orp['orp_nazev'],
+                        orp['0-14'],
+                        orp['15-59'],
+                        orp['60+'],
+                        infected,
+                        vaccinations
+                    ])
+                    count += 1
+
+        expected = (quarters * 50)
+        if count != expected:
+            raise CSVCreatorException(
+                'Loaded invalid amount of rows for query C1 (actual: %i, expected: %i)' % (count, expected)
+            )
 
     def get_ORP_infected_vaccinations(self, orp_code: int, start: datetime, end: datetime) -> Tuple[int, int]:
         coll = self.dbc.get_collection('nakazeni_orp')
@@ -204,11 +232,11 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
-        doc_infected = cursor.next()
-
-        if not doc_infected:
+        try:
+            doc_infected = cursor.next()
+        except StopIteration:
             raise CSVCreatorException(
-                'Failed to retrieve infection data for ORP %i %s-%s' % (orp_code, start, end)
+                'Failed to retrieve infection data for ORP (%s) %i %s-%s' % (self.orp.get_orp_nazev(orp_code), orp_code, start, end)
             )
 
         coll = self.dbc.get_collection('ockovani_orp')
@@ -230,11 +258,11 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
-        doc_vaccinations = cursor.next()
-
-        if not doc_vaccinations:
+        try:
+            doc_vaccinations = cursor.next()
+        except StopIteration:
             raise CSVCreatorException(
-                'Failed to retrieve vaccination data for ORP %i %s-%s' % (orp_code, start, end)
+                'Failed to retrieve vaccination data for ORP (%s) %i %s-%s' % (self.orp.get_orp_kod(orp_code), orp_code, start, end)
             )
 
         return (doc_infected['nakazeni'], doc_vaccinations['pocet_davek'])
@@ -243,6 +271,9 @@ class CSVCreator():
         coll = self.dbc.get_collection('obyvatele_orp')
 
         pipeline = [
+            {
+                '$match': {'orp_kod': {'$ne': 1000}} # Praha
+            },
             {
                 '$project': {
                     'orp_kod': True,
@@ -272,6 +303,17 @@ class CSVCreator():
             },
             {
                 '$limit': limit
+            },
+            {
+                '$project': {
+                    '_id': False,
+                    'orp_kod': '$_id',
+                    'orp_nazev': True,
+                    'populace': True,
+                    '0-14': True,
+                    '15-59': True,
+                    '60+': True
+                }
             }
         ]
         cursor = coll.aggregate(pipeline)
@@ -282,6 +324,16 @@ class CSVCreator():
             raise CSVCreatorException('Failed to retrieve %i most populous ORPs (retrieved: %i)' % (limit, count))
 
         return orps
+
+    def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
+        invalid_orps = dict((x[0], x[1]) for x in OCKOVANI)
+
+        for orp in orps:
+            if orp['orp_nazev'] in invalid_orps:
+                orp['orp_kod'] = invalid_orps[orp['orp_nazev']]
+
+        return orps
+
 
     def get_quarters_dates(self, start: datetime, quarters: int) -> List[datetime]:
         dt = start
@@ -309,6 +361,7 @@ class CSVCreator():
         self.query_A1()
         self.query_A2()
         self.query_B1()
+        self.query_C1()
 
     def log_head(self, cursor, count: int = 2) -> None:
         i = 0
@@ -322,6 +375,4 @@ class CSVCreator():
 if __name__ == '__main__':
     creator = CSVCreator()
     ensure_folder(creator.OUT_PATH)
-    #creator.create_all_csv_files()
-
-    creator.query_B1()
+    creator.create_all_csv_files()
