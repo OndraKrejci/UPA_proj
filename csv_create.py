@@ -12,7 +12,7 @@ from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
 from pprint import pprint
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
 
@@ -158,7 +158,7 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
-        header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'nakazeni_prirustek']
+        header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'kraj_populace', 'nakazeni_prirustek']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             rows = self.write_query_B1_data(cursor, writer)
@@ -169,8 +169,56 @@ class CSVCreator():
                 'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
             )
 
+    def get_region_populations(self) -> Dict[str, int]:
+        coll = self.dbc.get_collection('obyvatelstvo_kraj')
+
+        pipeline = [
+            {
+                '$group': {
+                    '_id': None,
+                    'max_datum': {'$max': '$casref_do'}
+                }
+            }
+        ]
+        cursor = coll.aggregate(pipeline)
+        doc = cursor.next()
+        max_datum = doc['max_datum']
+
+        pipeline = [
+            {
+                '$match': {
+                    '$and': [
+                        {'pohlavi_kod': {'$eq': ''}},
+                        {'vek_kod': {'$eq': ''}},
+                        {'casref_do': {'$eq': max_datum}}
+                    ]
+                }
+            },
+            {
+                '$project': {
+                    'kraj_nuts_kod': '$nuts_kod',
+                    'populace': '$pocet'
+                }
+            },
+            {
+                '$sort': {'datum': -1}
+            }
+        ]
+        cursor = coll.aggregate(pipeline)
+        region_populations = list(cursor)
+
+        count = len(region_populations)
+        expected = 14
+        if count != expected:
+            raise CSVCreatorException('Failed to retrieve %i populations of all regions(expected: %i, retrieved: %i)' % (expected, count))
+
+        region_populations = {x['kraj_nuts_kod']: x['populace'] for x in region_populations}
+
+        return region_populations
+
     def write_query_B1_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
+        region_populations = self.get_region_populations()
         nakazeni_zacatek = None
         nuts = None
         zacatek = None
@@ -183,6 +231,7 @@ class CSVCreator():
                         doc['datum'],
                         doc['kraj_nuts_kod'],
                         self.kraje.get_nazev(doc['kraj_nuts_kod']),
+                        region_populations.get(doc['kraj_nuts_kod'], None),
                         nakazeni_prirustek
                     ])
                     zacatek = None
@@ -543,4 +592,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_custom1()
+    #creator.query_B1()
