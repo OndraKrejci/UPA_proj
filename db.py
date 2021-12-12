@@ -13,7 +13,7 @@ import csv
 
 from dateutil import parser as DateParser
 
-from typing import Union
+from typing import Union, Tuple
 from collections import OrderedDict
 from pymongo.collection import Collection
 
@@ -30,6 +30,8 @@ class DBC:
         self.conn = None
         self.db = None
         self.connect(host, port, timeout)
+
+        self.version = self.get_version()
 
     def __del__(self):
         if self.conn:
@@ -58,6 +60,14 @@ class DBC:
             coll.drop()
 
         return coll
+
+    def get_version(self) -> Tuple[str]:
+        version = self.conn.server_info()['version']
+        return tuple(version.split('.'))
+
+    def check_version(self, version: str) -> bool:
+        req = tuple(version.split('.'))
+        return (req <= self.version)
 
     def create_collection_obyvatelstvo_kraj(self) -> None:
         coll = self.get_collection('obyvatelstvo_kraj')
