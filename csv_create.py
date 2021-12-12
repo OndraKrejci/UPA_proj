@@ -29,15 +29,21 @@ class CSVCreator():
     OUT_PATH = 'data_csv/'
 
     COMPATIBILITY_VERSION = '3.4.24'
+    NEW_VERSION = '5'
 
-    def __init__(self, compatibility = False) -> None:
+    def __init__(self, compatibility = False, log = True) -> None:
         self.dbc = DBC()
         self.kraje = Kraje()
         self.orp = ORP()
         self.compatibility = compatibility
+        self.log = True
+
+    def use_new_version(self) -> bool:
+        return (not self.compatibility and self.dbc.check_version(self.NEW_VERSION))
     
     def query_A1(self) -> None:
         csv_name = 'A1-covid_po_mesicich'
+        self.log_csv(csv_name)
 
         coll_name = 'covid_po_dnech_cr'
         coll = self.dbc.get_collection(coll_name)
@@ -96,6 +102,7 @@ class CSVCreator():
 
     def query_A2(self) -> None:
         csv_name = 'A2-osoby_nakazeni_kraj'
+        self.log_csv(csv_name)
 
         coll = self.dbc.get_collection('nakazeni_vek_okres_kraj')
 
@@ -127,6 +134,7 @@ class CSVCreator():
 
     def query_B1(self) -> None:
         csv_name = 'B1-prirustky_kraj'
+        self.log_csv(csv_name)
 
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
@@ -190,6 +198,7 @@ class CSVCreator():
 
     def query_C1(self) -> None:
         csv_name = 'C1-orp_ctvrtleti'
+        self.log_csv(csv_name)
 
         orps = self.map_to_invalid_ORP_codes(self.get_most_populous_ORPs())
         quarters = 4
@@ -337,11 +346,13 @@ class CSVCreator():
 
     def query_custom1(self) -> None:
         csv_name = 'custom1-zemreli_cr'
+        self.log_csv(csv_name)
+
         header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
 
         coll = self.dbc.get_collection('umrti_cr')
 
-        if not self.compatibility and self.dbc.check_version('5'):
+        if self.use_new_version():
             pipeline = [
                 {
                     '$match': {
@@ -500,6 +511,10 @@ class CSVCreator():
         return open('%s%s' % (self.OUT_PATH, fname + '.csv'), 'w', newline='', encoding='UTF-8')
 
     def create_all_csv_files(self) -> None:
+        if self.log:
+            version = self.NEW_VERSION if self.use_new_version() else self.COMPATIBILITY_VERSION
+            print('Using queries for MongoDB version %s\n' % version)
+
         ensure_folder(self.OUT_PATH)
 
         self.query_A1()
@@ -507,6 +522,10 @@ class CSVCreator():
         self.query_B1()
         self.query_C1()
         self.query_custom1()
+
+    def log_csv(self, csv_name: str) -> None:
+        if self.log:
+            print('Creating %s' % csv_name + '.csv')
 
     def log_head(self, cursor, count: int = 2) -> None:
         i = 0
