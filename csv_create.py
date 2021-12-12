@@ -34,6 +34,8 @@ class CSVCreator():
         self.orp = ORP()
     
     def query_A1(self) -> None:
+        csv_name = 'A1-covid_po_mesicich'
+
         coll_name = 'covid_po_dnech_cr'
         coll = self.dbc.get_collection(coll_name)
 
@@ -42,7 +44,7 @@ class CSVCreator():
         day = relativedelta(days=1)
         dt = DateParser.parse('2020-04-1')
         dt_now = datetime.now()
-        with self.csv_open('covid_po_mesicich') as file:
+        with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
 
             while dt < dt_now:
@@ -90,6 +92,8 @@ class CSVCreator():
                 dt = next_dt
 
     def query_A2(self) -> None:
+        csv_name = 'A2-osoby_nakazeni_kraj'
+
         coll = self.dbc.get_collection('nakazeni_vek_okres_kraj')
 
         pipeline = [
@@ -102,7 +106,7 @@ class CSVCreator():
         ]
         cursor = coll.aggregate(pipeline)
         header = ['kraj_nuts_kod', 'kraj_nazev', 'vek']
-        with self.csv_open('osoby_nakazeni_kraj') as file:
+        with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             self.write_query_A2_data(cursor, writer)
 
@@ -119,6 +123,8 @@ class CSVCreator():
         return count
 
     def query_B1(self) -> None:
+        csv_name = 'B1-prirustky_kraj'
+
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
         quarters = 4
@@ -142,7 +148,7 @@ class CSVCreator():
         ]
         cursor = coll.aggregate(pipeline)
         header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'nakazeni_prirustek']
-        with self.csv_open('prirustky_kraj') as file:
+        with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             rows = self.write_query_B1_data(cursor, writer)
 
@@ -180,13 +186,15 @@ class CSVCreator():
         return count
 
     def query_C1(self) -> None:
+        csv_name = 'C1-orp_ctvrtleti'
+
         orps = self.map_to_invalid_ORP_codes(self.get_most_populous_ORPs())
         quarters = 4
         dates = self.get_quarters_dates(DateParser.parse('2020-10-01'), quarters)
 
         count = 0
         header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
-        with self.csv_open('orp_ctvrtleti') as file:
+        with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             for orp in orps:
                 for i in range(quarters):
@@ -325,6 +333,8 @@ class CSVCreator():
         return orps
 
     def query_custom1(self) -> None:
+        csv_name = 'custom1-zemreli_cr'
+
         coll = self.dbc.get_collection('umrti_cr')
 
         pipeline = [
@@ -381,7 +391,7 @@ class CSVCreator():
         cursor = coll.aggregate(pipeline)
 
         header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
-        with self.csv_open('zemreli_cr') as file:
+        with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             self.write_query_custom1_data(cursor, writer)
 
