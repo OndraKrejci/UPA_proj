@@ -96,13 +96,12 @@ class CSVCreator():
             {
                 '$project': {
                     'kraj_nuts_kod': True,
-                    'vek': True,
-                    'pohlavi': True
+                    'vek': True
                 }
             }
         ]
         cursor = coll.aggregate(pipeline)
-        header = ['kraj_nuts_kod', 'kraj_nazev', 'vek', 'pohlavi']
+        header = ['kraj_nuts_kod', 'kraj_nazev', 'vek']
         with self.csv_open('osoby_nakazeni_kraj') as file:
             writer = self.get_csv_writer(file, header)
             self.write_query_A2_data(cursor, writer)
@@ -113,8 +112,7 @@ class CSVCreator():
             writer.writerow([
                 doc['kraj_nuts_kod'],
                 self.kraje.get_nazev(doc['kraj_nuts_kod']),
-                doc['vek'],
-                doc['pohlavi']
+                doc['vek']
             ])
             count += 1
 
@@ -453,3 +451,5 @@ if __name__ == '__main__':
     creator = CSVCreator()
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
+
+    #creator.query_A2()
