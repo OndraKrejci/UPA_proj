@@ -28,10 +28,13 @@ class CSVCreatorException(Exception):
 class CSVCreator():
     OUT_PATH = 'data_csv/'
 
-    def __init__(self) -> None:
+    COMPATIBILITY_VERSION = '3.4.24'
+
+    def __init__(self, compatibility = False) -> None:
         self.dbc = DBC()
         self.kraje = Kraje()
         self.orp = ORP()
+        self.compatibility = compatibility
     
     def query_A1(self) -> None:
         csv_name = 'A1-covid_po_mesicich'
@@ -334,34 +337,103 @@ class CSVCreator():
 
     def query_custom1(self) -> None:
         csv_name = 'custom1-zemreli_cr'
+        header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
 
         coll = self.dbc.get_collection('umrti_cr')
 
-        pipeline = [
-            {
-                '$match': {
-                    '$and': [
-                        {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
-                        {'vek_kod': {'$eq': ''}}
-                    ]
-                }
-            },
-            {
-                '$lookup': {
-                    'from': 'covid_po_dnech_cr',
-                    'let': {
+        if not self.compatibility and self.dbc.check_version('5'):
+            pipeline = [
+                {
+                    '$match': {
+                        '$and': [
+                            {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
+                            {'vek_kod': {'$eq': ''}}
+                        ]
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'covid_po_dnech_cr',
+                        'let': {
+                            'datum_od': '$casref_od',
+                            'datum_do': '$casref_do'
+                        },
+                        'pipeline': [
+                            {
+                                '$match': {
+                                    '$expr': {
+                                        '$and': [
+                                            {'$gte': ['$datum', '$$datum_od']},
+                                            {'$lte': ['$datum', '$$datum_do']}
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'umrti_covid': {'$sum': '$prirustkovy_pocet_umrti'}
+                                }
+                            },
+                            {
+                                '$limit': 1
+                            }
+                        ],
+                        'as': 'umrti_covid_arr'
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$umrti_covid_arr',
+                        'preserveNullAndEmptyArrays': True
+                    }
+                },
+                {
+                    '$project': {
                         'datum_od': '$casref_od',
-                        'datum_do': '$casref_do'
-                    },
-                    'pipeline': [
+                        'datum_do': '$casref_do',
+                        'umrti': '$pocet',
+                        'umrti_covid': '$umrti_covid_arr.umrti_covid'
+                    }
+                }
+            ]
+            cursor = coll.aggregate(pipeline)
+
+            with self.csv_open(csv_name) as file:
+                writer = self.get_csv_writer(file, header)
+                self.write_query_custom1_data(cursor, writer)
+        else:
+            pipeline = [
+                {
+                    '$match': {
+                        '$and': [
+                            {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
+                            {'vek_kod': {'$eq': ''}}
+                        ]
+                    }
+                },
+                {
+                    '$project': {
+                        'datum_od': '$casref_od',
+                        'datum_do': '$casref_do',
+                        'umrti': '$pocet'
+                    }
+                }
+            ]
+            cursor = coll.aggregate(pipeline)
+
+            coll_covid = self.dbc.get_collection('covid_po_dnech_cr')
+
+            with self.csv_open(csv_name) as file:
+                writer = self.get_csv_writer(file, header)
+                for doc in cursor:
+                    pipeline_covid = [
                         {
                             '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {'$gte': ['$datum', '$$datum_od']},
-                                        {'$lte': ['$datum', '$$datum_do']}
-                                    ]
-                                }
+                                '$and': [
+                                    {'datum': {'$gte': doc['datum_od']}},
+                                    {'datum': {'$lte': doc['datum_do']}}
+                                ]
                             }
                         },
                         {
@@ -373,43 +445,29 @@ class CSVCreator():
                         {
                             '$limit': 1
                         }
-                    ],
-                    'as': 'umrti_covid_arr'
-                }
-            },
-            {
-                '$unwind': {
-                    'path': '$umrti_covid_arr',
-                    'preserveNullAndEmptyArrays': True
-                }
-            },
-            {
-                '$project': {
-                    'datum_od': '$casref_od',
-                    'datum_do': '$casref_do',
-                    'umrti': '$pocet',
-                    'umrti_covid': '$umrti_covid_arr.umrti_covid'
-                }
-            }
-        ]
-        cursor = coll.aggregate(pipeline)
+                    ]
+                    cursor_covid = coll_covid.aggregate(pipeline_covid)
+                    try:
+                        doc_umrti_covid = cursor_covid.next()
+                        doc['umrti_covid'] = doc_umrti_covid['umrti_covid']
+                    except StopIteration:
+                        doc['umrti_covid'] = None
+                        
+                    self.write_query_custom1_row(doc, writer)
 
-        header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
-        with self.csv_open(csv_name) as file:
-            writer = self.get_csv_writer(file, header)
-            self.write_query_custom1_data(cursor, writer)
+    def write_query_custom1_row(self, doc: dict, writer) -> None:
+        writer.writerow([
+            doc['datum_od'],
+            doc['datum_do'],
+            doc['umrti'],
+            doc.get('umrti_covid', None)
+        ])
 
     def write_query_custom1_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
         for doc in cursor:
-            writer.writerow([
-                doc['datum_od'],
-                doc['datum_do'],
-                doc['umrti'],
-                doc.get('umrti_covid', None)
-            ])
+            self.write_query_custom1_row(doc, writer)
             count += 1
-
         return count
 
     def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
@@ -464,6 +522,6 @@ class CSVCreator():
 if __name__ == '__main__':
     creator = CSVCreator()
     ensure_folder(creator.OUT_PATH)
-    #creator.create_all_csv_files()
+    creator.create_all_csv_files()
 
-    creator.query_custom1()
+    #creator.query_custom1()
