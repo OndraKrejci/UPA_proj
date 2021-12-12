@@ -110,7 +110,8 @@ class CSVCreator():
             {
                 '$project': {
                     'kraj_nuts_kod': True,
-                    'vek': True
+                    'vek': True,
+                    'nakaza_v_zahranici': True
                 }
             }
         ]
@@ -123,9 +124,21 @@ class CSVCreator():
     def write_query_A2_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
         for doc in cursor:
+            kraj_nuts_kod = doc['kraj_nuts_kod']
+
+            if kraj_nuts_kod is None:
+                if doc['nakaza_v_zahranici']:
+                    kraj_nuts_kod = 'neznamy-zahranici'
+                    kraj_nazev = 'neznámý (nákaza v zahraničí)'
+                else:
+                    kraj_nuts_kod = 'neznamy'
+                    kraj_nazev = 'neznámý'
+            else:
+                kraj_nazev = self.kraje.get_nazev(doc['kraj_nuts_kod'])
+            
             writer.writerow([
-                doc['kraj_nuts_kod'],
-                self.kraje.get_nazev(doc['kraj_nuts_kod']),
+                kraj_nuts_kod,
+                kraj_nazev,
                 doc['vek']
             ])
             count += 1
@@ -592,4 +605,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_B1()
+    #creator.query_A2()
