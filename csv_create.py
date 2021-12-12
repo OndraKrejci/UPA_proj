@@ -11,6 +11,7 @@ import sys
 from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
+from pprint import pprint
 from typing import List, Tuple
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
@@ -325,6 +326,80 @@ class CSVCreator():
 
         return orps
 
+    def query_custom1(self) -> None:
+        coll = self.dbc.get_collection('umrti_cr')
+
+        pipeline = [
+            {
+                '$match': {
+                    '$and': [
+                        {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
+                        {'vek_kod': {'$eq': ''}}
+                    ]
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'covid_po_dnech_cr',
+                    'let': {
+                        'datum_od': '$casref_od',
+                        'datum_do': '$casref_do'
+                    },
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {'$gte': ['$datum', '$$datum_od']},
+                                        {'$lte': ['$datum', '$$datum_do']}
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            '$group': {
+                                '_id': None,
+                                'umrti_covid': {'$sum': '$prirustkovy_pocet_umrti'}
+                            }
+                        }
+                    ],
+                    'as': 'umrti_covid_arr'
+                }
+            },
+            {
+                '$set': {
+                    'umrti_covid': {'$first': '$umrti_covid_arr.umrti_covid'}
+                }
+            },
+            {
+                '$project': {
+                    'datum_od': '$casref_od',
+                    'datum_do': '$casref_do',
+                    'umrti': '$pocet',
+                    'umrti_covid': '$umrti_covid'
+                }
+            }
+        ]
+        cursor = coll.aggregate(pipeline)
+
+        header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
+        with self.csv_open('zemreli_cr') as file:
+            writer = self.get_csv_writer(file, header)
+            self.write_query_custom1_data(cursor, writer)
+
+    def write_query_custom1_data(self, cursor: CommandCursor, writer) -> int:
+        count = 0
+        for doc in cursor:
+            writer.writerow([
+                doc['datum_od'],
+                doc['datum_do'],
+                doc['umrti'],
+                doc.get('umrti_covid', None)
+            ])
+            count += 1
+
+        return count
+
     def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
         invalid_orps = dict((x[0], x[1]) for x in OCKOVANI)
 
@@ -333,7 +408,6 @@ class CSVCreator():
                 orp['orp_kod'] = invalid_orps[orp['orp_nazev']]
 
         return orps
-
 
     def get_quarters_dates(self, start: datetime, quarters: int) -> List[datetime]:
         dt = start
@@ -362,11 +436,14 @@ class CSVCreator():
         self.query_A2()
         self.query_B1()
         self.query_C1()
+        self.query_custom1()
 
     def log_head(self, cursor, count: int = 2) -> None:
         i = 0
         for doc in cursor:
-            print(doc, end='\n\n')
+            #print(doc, end='\n\n')
+            pprint(doc)
+            print()
             i += 1
 
             if i > count:
