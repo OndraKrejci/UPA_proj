@@ -369,14 +369,18 @@ class CSVCreator():
                                 '_id': None,
                                 'umrti_covid': {'$sum': '$prirustkovy_pocet_umrti'}
                             }
+                        },
+                        {
+                            '$limit': 1
                         }
                     ],
                     'as': 'umrti_covid_arr'
                 }
             },
             {
-                '$set': {
-                    'umrti_covid': {'$first': '$umrti_covid_arr.umrti_covid'}
+                '$unwind': {
+                    'path': '$umrti_covid_arr',
+                    'preserveNullAndEmptyArrays': True
                 }
             },
             {
@@ -384,7 +388,7 @@ class CSVCreator():
                     'datum_od': '$casref_od',
                     'datum_do': '$casref_do',
                     'umrti': '$pocet',
-                    'umrti_covid': '$umrti_covid'
+                    'umrti_covid': '$umrti_covid_arr.umrti_covid'
                 }
             }
         ]
@@ -460,6 +464,6 @@ class CSVCreator():
 if __name__ == '__main__':
     creator = CSVCreator()
     ensure_folder(creator.OUT_PATH)
-    creator.create_all_csv_files()
+    #creator.create_all_csv_files()
 
-    #creator.query_A2()
+    creator.query_custom1()
