@@ -19,7 +19,7 @@ from pymongo.command_cursor import CommandCursor
 from db import DBC
 from download import ensure_folder
 from ciselniky import ORP, Kraje
-from invalid_orp import OCKOVANI
+from invalid_orp import InvalidORPCodeDetector
 
 class CSVCreatorException(Exception):
     def __init__(self, message: str = ''):
@@ -31,12 +31,18 @@ class CSVCreator():
     COMPATIBILITY_VERSION = '3.4.24'
     NEW_VERSION = '5'
 
-    def __init__(self, compatibility = False, log = True) -> None:
+    def __init__(self, compatibility: bool = False, log: bool = True) -> None:
         self.dbc = DBC()
+
         self.kraje = Kraje()
         self.orp = ORP()
+
+        self.invalid_orp_helper = InvalidORPCodeDetector(self.orp)
+        self.invalid_orp_set = self.invalid_orp_helper.get_invalid_orp_set('orp-ockovani-geografie.json')
+        self.invalid_orp_dict = self.invalid_orp_helper.invalid_orp_set_to_dict(self.invalid_orp_set)
+
         self.compatibility = compatibility
-        self.log = True
+        self.log = log
 
     def use_new_version(self) -> bool:
         return (not self.compatibility and self.dbc.check_version(self.NEW_VERSION))
@@ -544,11 +550,9 @@ class CSVCreator():
         return count
 
     def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
-        invalid_orps = dict((x[0], x[1]) for x in OCKOVANI)
-
         for orp in orps:
-            if orp['orp_nazev'] in invalid_orps:
-                orp['orp_kod'] = invalid_orps[orp['orp_nazev']]
+            if orp['orp_nazev'] in self.invalid_orp_dict:
+                orp['orp_kod'] = self.invalid_orp_dict[orp['orp_nazev']]
 
         return orps
 
@@ -605,4 +609,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_A2()
+    #creator.query_C1()
