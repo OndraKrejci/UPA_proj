@@ -12,7 +12,6 @@ import json
 import csv
 
 from dateutil import parser as DateParser
-
 from typing import Union, Tuple
 from collections import OrderedDict
 from pymongo.collection import Collection

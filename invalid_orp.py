@@ -8,9 +8,10 @@
 import json
 import sys
 
+from typing import Union
+
 from download import DATA_PATH
 from ciselniky import ORP
-from typing import Union
 
 class InvalidORPCodeDetector():
     FILES = {

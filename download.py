@@ -6,11 +6,11 @@
 # @date: 11/2021
 # Downloads data
 
-from typing import List
-
 import requests
 import os
 import sys
+
+from typing import List
 
 DATA_PATH = 'data'
 
