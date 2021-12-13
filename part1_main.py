@@ -1,5 +1,5 @@
 ##
-# @file main.py
+# @file part1_main.py
 # @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 11/2021
@@ -8,8 +8,8 @@
 import argparse
 import sys
 
-from download import download_data
-from db import DBC
+from part1.download import download_data
+from part1.db import DBC
 
 def main() -> None:
     argparser = argparse.ArgumentParser()

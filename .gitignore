@@ -3,6 +3,7 @@
 /*.json
 /*.xml
 
+/part1/data*/
 /data*/
 /test/
 /test*

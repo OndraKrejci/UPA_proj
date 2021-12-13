@@ -10,8 +10,8 @@ import sys
 
 from typing import Union
 
-from download import DATA_PATH
-from ciselniky import ORP
+from .download import DATA_PATH
+from .ciselniky import ORP
 
 class InvalidORPCodeDetector():
     FILES = {

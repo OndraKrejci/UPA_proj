@@ -9,7 +9,7 @@ import csv
 
 from typing import Tuple, Union
 
-from download import DATA_PATH
+from .download import DATA_PATH
 
 CSU7700 = {
     '400000600005000': '0-4 ',

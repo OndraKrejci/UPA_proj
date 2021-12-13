@@ -16,10 +16,10 @@ from typing import Dict, List, Tuple
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
 
-from db import DBC
-from download import ensure_folder
-from ciselniky import ORP, Kraje
-from invalid_orp import InvalidORPCodeDetector
+from part1.db import DBC
+from part1.download import ensure_folder
+from part1.ciselniky import ORP, Kraje
+from part1.invalid_orp import InvalidORPCodeDetector
 
 class CSVCreatorException(Exception):
     def __init__(self, message: str = ''):
@@ -609,4 +609,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_C1()
+    #creator.query_B1()

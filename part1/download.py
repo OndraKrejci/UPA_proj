@@ -12,7 +12,7 @@ import sys
 
 from typing import List
 
-DATA_PATH = 'data'
+DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
 DATA: List[dict] = [
     # KRAJ, OKRES, ORP, OBEC

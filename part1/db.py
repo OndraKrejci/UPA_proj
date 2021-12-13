@@ -16,9 +16,9 @@ from typing import Union, Tuple
 from collections import OrderedDict
 from pymongo.collection import Collection
 
-from download import DATA_PATH
-from ciselniky import UZEMI_KRAJ, Kraje, ORP, get_csu7700_ciselnik
-from merge import mergeListsByKey, mergeListsByTwoKeys
+from .download import DATA_PATH
+from .ciselniky import UZEMI_KRAJ, Kraje, ORP, get_csu7700_ciselnik
+from .merge import mergeListsByKey, mergeListsByTwoKeys
 
 class DBC:
     DB_NAME = 'covid'
