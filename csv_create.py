@@ -18,7 +18,7 @@ from pymongo.command_cursor import CommandCursor
 
 from part1.db import DBC
 from part1.download import ensure_folder
-from part1.ciselniky import ORP, Kraje
+from part1.ciselniky import ORP, Kraje, OBYVATELSTVO_KRAJ_CSU7700
 from part1.invalid_orp import InvalidORPCodeDetector
 
 class CSVCreatorException(Exception):
@@ -188,7 +188,7 @@ class CSVCreator():
                 'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
             )
 
-    def get_region_populations(self) -> Dict[str, int]:
+    def get_regions_population_max_date(self) -> int:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
 
         pipeline = [
@@ -201,7 +201,12 @@ class CSVCreator():
         ]
         cursor = coll.aggregate(pipeline)
         doc = cursor.next()
-        max_datum = doc['max_datum']
+        return doc['max_datum']
+
+    def get_regions_population_total(self) -> Dict[str, int]:
+        coll = self.dbc.get_collection('obyvatelstvo_kraj')
+
+        max_datum = self.get_regions_population_max_date()
 
         pipeline = [
             {
@@ -229,7 +234,7 @@ class CSVCreator():
         count = len(region_populations)
         expected = 14
         if count != expected:
-            raise CSVCreatorException('Failed to retrieve %i populations of all regions(expected: %i, retrieved: %i)' % (expected, count))
+            raise CSVCreatorException('Failed to retrieve populations of all regions (expected: %i, retrieved: %i)' % (expected, count))
 
         region_populations = {x['kraj_nuts_kod']: x['populace'] for x in region_populations}
 
@@ -237,7 +242,7 @@ class CSVCreator():
 
     def write_query_B1_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
-        region_populations = self.get_region_populations()
+        region_populations = self.get_regions_population_total()
         nakazeni_zacatek = None
         nuts = None
         zacatek = None
@@ -548,6 +553,71 @@ class CSVCreator():
             self.write_query_custom1_row(doc, writer)
             count += 1
         return count
+
+    def query_custom2(self) -> None:
+        pass
+
+    def get_regions_population_groups(self) -> dict:
+        coll = self.dbc.get_collection('obyvatelstvo_kraj')
+
+        max_datum = self.get_regions_population_max_date()
+
+        region_age_groups = {nuts_code: {} for nuts_code in self.kraje.NUTS3.keys()}
+        region_count = 14
+
+        i = 0
+        while i <= 90:
+            if i < 90:
+                keys = ['%i-%i' % (i, (i + 4)), '%i-%i' % ((i + 5), (i + 9))]
+                age_group = '%i-%i' % (i, (i + 9))
+            else:
+                keys = ['90-94', '95+']
+                age_group = '90+'
+
+            age_codes = [OBYVATELSTVO_KRAJ_CSU7700[key] for key in keys]
+
+            pipeline = [
+                {
+                    '$match': {
+                        '$and': [
+                            {'pohlavi_kod': {'$eq': ''}},
+                            {'vek_kod': {'$in': age_codes}},
+                            {'casref_do': {'$eq': max_datum}}
+                        ]
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$nuts_kod',
+                        'pocet': {'$sum': '$pocet'}
+                    }
+                },
+                {
+                    '$project': {
+                        'kraj_nuts_kod': '$_id',
+                        'pocet': '$pocet'
+                    }
+                },
+                {
+                    '$sort': {'datum': -1}
+                }
+            ]
+            cursor = coll.aggregate(pipeline)
+            region_populations = list(cursor)
+
+            count = len(region_populations)
+            if count != region_count:
+                raise CSVCreatorException(
+                    'Failed to retrieve populations of all regions for age groups %s, %s (expected: %i, retrieved: %i)'
+                    % (keys[0], keys[1], region_count, count)
+                )
+
+            for doc in region_populations:
+                region_age_groups[doc['kraj_nuts_kod']][age_group] = doc['pocet']
+            
+            i += 10
+
+        return region_age_groups
 
     def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
         for orp in orps:
