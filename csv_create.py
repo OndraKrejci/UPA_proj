@@ -611,11 +611,11 @@ class CSVCreator():
     def write_query_custom2_row(self, doc: dict, writer) -> None:
         writer.writerow([
             doc['kraj_nuts_kod'],
+            doc['kraj_nazev'],
             doc['vekova_kategorie'],
             doc['pocet_obyvatel'],
             doc['umrti_covid']
         ])
-    
 
     def get_regions_population_groups(self) -> Dict[str, dict]:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
@@ -718,6 +718,7 @@ class CSVCreator():
         self.query_B1()
         self.query_C1()
         self.query_custom1()
+        self.query_custom2()
 
     def log_csv(self, csv_name: str) -> None:
         if self.log:
