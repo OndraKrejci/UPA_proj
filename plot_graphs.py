@@ -13,15 +13,16 @@ import seaborn as sns
 import scipy as sp
 from matplotlib.dates import date2num
 import datetime
+import matplotlib.ticker as mtick
+from sklearn import preprocessing
 #from tabulate import tabulate
 
 def plot_A1():
     df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
 
-    x = df['zacatek'].to_numpy()
-    y = df[['nakazeni', 'vyleceni', 'hospitalizovani', 'testy']].to_numpy()
+    df['zacatek'] = pd.to_datetime(df['zacatek'])
 
-    plt.plot(x, y)
+    plt.plot(df['zacatek'].to_numpy(), df[['nakazeni', 'vyleceni', 'hospitalizovani', 'testy']].to_numpy())
     plt.show()
 
 def plot_A2():
@@ -74,11 +75,70 @@ def print_B1():
         ndf.index = np.arange(1, len(ndf)+1)
         print(ndf)
 
+def prepare_C1():
+    df = pd.read_csv('data_csv/C1-orp_ctvrtleti.csv', delimiter=";")
+    df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
+    df['datum_konec'] = pd.to_datetime(df['datum_konec'])
+
+    dates = df["datum_zacatek"].unique()
+
+    fdf = pd.DataFrame()
+
+    for d in dates:
+        mask = df['datum_zacatek'] == d
+        ndf = df[mask].copy()
+        ndf.index = np.arange(0, len(ndf))
+
+        y = ndf[ndf.columns[4:7]].copy()
+
+        down_quantiles = y.quantile(0.05)
+        outliers_low = (y < down_quantiles)
+        y.mask(outliers_low, down_quantiles, axis=1, inplace=True)
+
+        up_quantiles = y.quantile(0.95)
+        outliers_high = (y >
+        up_quantiles)
+        y.mask(outliers_high, up_quantiles, axis=1, inplace=True)
+
+        ndf.update(y)
 
 
+        x = ndf['nakazeni'].values #returns a numpy array
+        min_max_scaler = preprocessing.MinMaxScaler()
+        x = x.reshape(-1,1)
+        x_scaled = min_max_scaler.fit_transform(x)
+        ndf['nakazeni'].update(x_scaled.reshape(-1))
+
+        ndf['pocet_davek_discrete'] = pd.qcut(ndf['pocet_davek'], q=3, duplicates='drop', labels=["bad", "medium", "good"])
+
+        ndf[ndf.columns[4:7]] = ndf[ndf.columns[4:7]].apply(np.int64)
+
+
+        fdf = pd.concat([fdf,ndf])
+
+    fdf.index = np.arange(0, len(fdf))
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', 1000)
+    print(fdf)
+
+
+
+def plot_D1():
+    df = pd.read_csv('data_csv/custom1-zemreli_cr.csv', delimiter=";")
+    df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
+    df['pomer'] = df['zemreli_covid'] / df['zemreli']*100
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+
+    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy())
+    plt.show()
 
 #plot_A1()
 #plot_A2()
 #plot_B1()
-print_B1()
+#print_B1()
+prepare_C1()
+#plot_D1()
 
