@@ -555,9 +555,69 @@ class CSVCreator():
         return count
 
     def query_custom2(self) -> None:
-        pass
+        csv_name = 'custom2-zemreli-vekove-kategorie'
+        self.log_csv(csv_name)
 
-    def get_regions_population_groups(self) -> dict:
+        coll = self.dbc.get_collection('umrti_vek_okres_kraj')
+
+        region_population_groups = self.get_regions_population_groups()
+
+        header = ['kraj_nuts_kod', 'kraj_nazev', 'vekova_kategorie', 'pocet_obyvatel', 'umrti_covid']
+        with self.csv_open(csv_name) as file:
+            writer = self.get_csv_writer(file, header)
+            for nuts_code, groups in region_population_groups.items():
+                doc = {
+                    'kraj_nuts_kod': nuts_code,
+                    'kraj_nazev': self.kraje.get_nazev(nuts_code),
+                    'vekova_kateogrie': None,
+                    'pocet_obyvatel': None,
+                    'umrti_covid': None
+                }
+                for group_name, population in groups.items():
+                    doc['vekova_kategorie'] = group_name
+                    doc['pocet_obyvatel'] = population
+
+                    if group_name != '90+':
+                        start, end = (int(age) for age in group_name.split('-'))
+                        and_obj = [
+                            {'kraj_nuts_kod': {'$eq': nuts_code}},
+                            {'vek': {'$gte': start}},
+                            {'vek': {'$lte': end}}
+                        ]
+                    else:
+                        and_obj = [
+                            {'kraj_nuts_kod': {'$eq': nuts_code}},
+                            {'vek': {'$gte': 90}}
+                        ]
+
+                    pipeline = [
+                        {
+                            '$match': {
+                                '$and': and_obj
+                            }
+                        },
+                        {
+                            '$count': 'umrti'
+                        }
+                    ]
+                    cursor = coll.aggregate(pipeline)
+                    try:
+                        doc_count = cursor.next()
+                        doc['umrti_covid'] = doc_count['umrti']
+                    except StopIteration:
+                        doc['umrti_covid'] = 0
+                    self.write_query_custom2_row(doc, writer)
+
+    def write_query_custom2_row(self, doc: dict, writer) -> None:
+        writer.writerow([
+            doc['kraj_nuts_kod'],
+            doc['vekova_kategorie'],
+            doc['pocet_obyvatel'],
+            doc['umrti_covid']
+        ])
+    
+
+    def get_regions_population_groups(self) -> Dict[str, dict]:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
 
         max_datum = self.get_regions_population_max_date()
@@ -679,4 +739,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_B1()
+    #creator.query_custom2()
