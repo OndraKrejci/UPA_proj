@@ -713,8 +713,4 @@ def main() -> None:
         sys.exit(2)
 
 if __name__ == '__main__':
-    creator = CSVCreator(compatibility=True)
-    ensure_folder(creator.OUT_PATH)
-    creator.create_all_csv_files()
-
-    #creator.query_D1()
+    main()
