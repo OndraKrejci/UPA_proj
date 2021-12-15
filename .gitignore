@@ -4,6 +4,11 @@
 /*.xml
 
 /part1/data/*
+!/part1/data/orp-ciselnik.csv
+!/part1/data/csu7700.csv
+!/part1/data/vazba-orp-kraj.csv
+!/part1/data/kraj-ciselnik.csv
+
 /_local*
 
 __pycache__/
