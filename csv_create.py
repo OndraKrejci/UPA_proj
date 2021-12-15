@@ -407,8 +407,8 @@ class CSVCreator():
 
         return orps
 
-    def query_custom1(self) -> None:
-        csv_name = 'custom1-zemreli_cr'
+    def query_D1(self) -> None:
+        csv_name = 'D1-zemreli_cr'
         self.log_csv(csv_name)
 
         header = ['datum_zacatek', 'datum_konec', 'zemreli', 'zemreli_covid']
@@ -475,7 +475,7 @@ class CSVCreator():
 
             with self.csv_open(csv_name) as file:
                 writer = self.get_csv_writer(file, header)
-                self.write_query_custom1_data(cursor, writer)
+                self.write_query_D1_data(cursor, writer)
         else:
             pipeline = [
                 {
@@ -527,9 +527,9 @@ class CSVCreator():
                     except StopIteration:
                         doc['umrti_covid'] = None
                         
-                    self.write_query_custom1_row(doc, writer)
+                    self.write_query_D1_row(doc, writer)
 
-    def write_query_custom1_row(self, doc: dict, writer) -> None:
+    def write_query_D1_row(self, doc: dict, writer) -> None:
         writer.writerow([
             doc['datum_od'],
             doc['datum_do'],
@@ -537,15 +537,15 @@ class CSVCreator():
             doc.get('umrti_covid', None)
         ])
 
-    def write_query_custom1_data(self, cursor: CommandCursor, writer) -> int:
+    def write_query_D1_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
         for doc in cursor:
-            self.write_query_custom1_row(doc, writer)
+            self.write_query_D1_row(doc, writer)
             count += 1
         return count
 
-    def query_custom2(self) -> None:
-        csv_name = 'custom2-zemreli-vekove-kategorie'
+    def query_D2(self) -> None:
+        csv_name = 'D2-zemreli_vekove_kategorie'
         self.log_csv(csv_name)
 
         coll = self.dbc.get_collection('umrti_vek_okres_kraj')
@@ -589,9 +589,9 @@ class CSVCreator():
                     'pocet_obyvatel': population,
                     'umrti_covid': umrti_covid
                 }
-                self.write_query_custom2_row(doc, writer)
+                self.write_query_D2_row(doc, writer)
 
-    def write_query_custom2_row(self, doc: dict, writer) -> None:
+    def write_query_D2_row(self, doc: dict, writer) -> None:
         writer.writerow([
             doc['vekova_kategorie'],
             doc['pocet_obyvatel'],
@@ -682,8 +682,8 @@ class CSVCreator():
         self.query_A2()
         self.query_B1()
         self.query_C1()
-        self.query_custom1()
-        self.query_custom2()
+        self.query_D1()
+        self.query_D2()
 
     def log_csv(self, csv_name: str) -> None:
         if self.log:
@@ -705,4 +705,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_B1()
+    #creator.query_D1()
