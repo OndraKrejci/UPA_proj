@@ -221,7 +221,7 @@ def prepare_C1():
 
 
 def plot_D1():
-    df = pd.read_csv('data_csv/custom1-zemreli_cr.csv', delimiter=";")
+    df = pd.read_csv('data_csv/D1-zemreli_cr.csv', delimiter=";")
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['zemreli_covid'] / df['zemreli']*100
 
@@ -244,7 +244,7 @@ def plot_D1():
     plt.savefig("D1.svg", dpi=300)
 
 def plot_D2():
-    df = pd.read_csv('data_csv/custom2-zemreli-vekove-kategorie.csv', delimiter=";")
+    df = pd.read_csv('data_csv/D2-zemreli_vekove_kategorie.csv', delimiter=";")
 
     df['pomer'] = df['umrti_covid'] / df['pocet_obyvatel']*100
 
