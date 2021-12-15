@@ -85,37 +85,41 @@ def plot_A2():
     #plt.show()
 
 def prepare_B1():
-    if os.path.isfile('data_csv/B1-prirustky_kraj.csv'):
-        df = pd.read_csv('data_csv/B1-prirustky_kraj.csv', delimiter=";")
-        plot_B1(df)
-        print_B1(df)
-    else:
 
-        nakazeni_zacatek = None
-        nuts = None
-        zacatek = None
-        for doc in cursor:
-            if nuts == doc['kraj_nuts_kod']:
-                if zacatek is not None:
-                    nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - nakazeni_zacatek
-                    writer.writerow([
-                        zacatek,
-                        doc['datum'],
-                        doc['kraj_nuts_kod'],
-                        nakazeni_prirustek
-                    ])
-                    zacatek = None
-                    continue
-            else:
-                nuts = doc['kraj_nuts_kod']
+    df = pd.read_csv('data_csv/B1-nakazeni_kumulativne_kraj.csv', delimiter=";")
 
-            zacatek = doc['datum']
-            nakazeni_zacatek = doc['kumulativni_pocet_nakazenych']
+    df['datum'] = pd.to_datetime(df['datum'])
+    df['shift'] = df['kumulativni_pocet_nakazenych'].shift(periods=-1, fill_value=0)
+    df['nakazeni_prirustek'] = df['shift']-df['kumulativni_pocet_nakazenych']
+    df['datum_konec'] = df['datum'].shift(periods=-1)
+    dates = df["datum"].unique()
+    mask = ~(df['datum'] == dates[-1])
+    df = df[mask].copy()
+    df.drop(['shift', 'kumulativni_pocet_nakazenych'], axis=1, inplace=True)
+
+    cols = df.columns.tolist()
+    cols = cols[0:1] + cols[-1:] + cols[1:-1]
+    df = df[cols]
+
+    df['datum_konec'] = df['datum_konec'] - pd.Timedelta(days=1)
+    df.rename({'datum': 'datum_zacatek'}, axis=1, inplace=True)
+
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', 1000)
+    pd.set_option('display.colheader_justify', 'center')
+    pd.set_option('display.precision', 5)
+    print(df)
+
+    plot_B1(df)
+    print_B1(df)
+
+
 
 
 def plot_B1(df):
-    df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
-    mask = df['datum_zacatek'] == '2020-10-01'
+    dates = df["datum_zacatek"].unique()
+    mask = df['datum_zacatek'] == dates[1]
     df = df[mask].copy()
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     df.sort_values(by=['pomer'], inplace=True, ascending=False)
@@ -131,8 +135,8 @@ def plot_B1(df):
     ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="pocet obyvatelov")
     ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakazeny")
 
-    ax2.set_ylim(0, 1700000)
-    ax.set_ylim(0.045, 0.085)
+    ax2.set_ylim(0, 1600000)
+    ax.set_ylim(0.051, 0.119)
 
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
@@ -152,7 +156,6 @@ def plot_B1(df):
 
 def print_B1(df):
 
-    df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
@@ -191,14 +194,14 @@ def prepare_C1():
 
         y = ndf[['0-14', '15-59', '60+']].copy()
 
-        down_quantiles = y.quantile(0.05)
-        outliers_low = (y < down_quantiles)
-        y.mask(outliers_low, down_quantiles, axis=1, inplace=True)
+        Q1 = y.quantile(0.25)
+        Q3 = y.quantile(0.75)
+        IQR = Q3 - Q1
+        outliers_low = (y < Q1 - 1.5 * IQR)
+        y.mask(outliers_low, Q1 - 1.5 * IQR, axis=1, inplace=True)
 
-        up_quantiles = y.quantile(0.95)
-        outliers_high = (y >
-        up_quantiles)
-        y.mask(outliers_high, up_quantiles, axis=1, inplace=True)
+        outliers_high = (y > Q3 + 1.5 * IQR)
+        y.mask(outliers_high, Q3 + 1.5 * IQR, axis=1, inplace=True)
 
         ndf.update(y)
 
