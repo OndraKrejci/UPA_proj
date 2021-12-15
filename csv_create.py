@@ -407,12 +407,14 @@ class CSVCreator():
 
         coll = self.dbc.get_collection('umrti_cr')
 
+        date_start = DateParser.parse('2020-01-01')
+
         if self.use_new_version():
             pipeline = [
                 {
                     '$match': {
                         '$and': [
-                            {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
+                            {'casref_od': {'$gte': date_start}},
                             {'vek_kod': {'$eq': ''}}
                         ]
                     }
@@ -473,7 +475,7 @@ class CSVCreator():
                 {
                     '$match': {
                         '$and': [
-                            {'casref_od': {'$gte': DateParser.parse('2020-01-01')}},
+                            {'casref_od': {'$gte': date_start}},
                             {'vek_kod': {'$eq': ''}}
                         ]
                     }
@@ -715,4 +717,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_B1()
+    #creator.query_D1()
