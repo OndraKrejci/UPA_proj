@@ -57,7 +57,7 @@ class CSVCreator():
         header = ['zacatek', 'konec', 'nakazeni', 'vyleceni', 'hospitalizovani', 'testy']
         month = relativedelta(months=1)
         day = relativedelta(days=1)
-        dt = DateParser.parse('2020-04-1')
+        dt = DateParser.parse('2020-04-01')
         dt_now = datetime.now()
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
@@ -278,7 +278,7 @@ class CSVCreator():
         dates = self.get_quarters_dates(DateParser.parse('2020-10-01'), quarters)
 
         count = 0
-        header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
+        header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'mzcr_orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             for orp in orps:
@@ -289,6 +289,7 @@ class CSVCreator():
                         dates[pos],
                         dates[pos + 1],
                         orp['orp_kod'],
+                        self.orp.get_orp_kod(orp['orp_nazev']),
                         orp['orp_nazev'],
                         orp['0-14'],
                         orp['15-59'],
@@ -740,4 +741,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_custom2()
+    #creator.query_C1()
