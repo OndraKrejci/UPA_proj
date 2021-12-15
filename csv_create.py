@@ -151,7 +151,7 @@ class CSVCreator():
 
         return count
 
-    def query_B1(self) -> None:
+    def query_B1(self, export_intermediate: bool = True) -> None:
         csv_name = 'B1-prirustky_kraj'
         self.log_csv(csv_name)
 
@@ -180,7 +180,7 @@ class CSVCreator():
         header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'kraj_populace', 'nakazeni_prirustek']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
-            rows = self.write_query_B1_data(cursor, writer)
+            rows = self.write_query_B1_data(cursor, writer, export_intermediate)
 
         expected = (len(Kraje.NUTS3) * quarters)
         if rows != expected:
@@ -240,13 +240,38 @@ class CSVCreator():
 
         return region_populations
 
-    def write_query_B1_data(self, cursor: CommandCursor, writer) -> int:
+    def write_query_B1_data(self, cursor: CommandCursor, writer, export_intermediate: bool = True) -> int:
         count = 0
         region_populations = self.get_regions_population_total()
         nakazeni_zacatek = None
         nuts = None
         zacatek = None
+        if export_intermediate:
+            csv_name = 'i_B1-populace-kraje'
+            self.log_csv(csv_name, intermediate=True)
+            with self.csv_open(csv_name) as population_csvf:
+                population_header = ['kraj_nuts_kod', 'kraj_nazev', 'populace']
+                population_writer = self.get_csv_writer(population_csvf, population_header)
+                for nuts_code, population in region_populations.items():
+                    population_writer.writerow([
+                        nuts_code,
+                        self.kraje.get_nazev(nuts_code),
+                        population
+                    ])
+
+            csv_name = 'i_B1-kumulativni-kraj'
+            self.log_csv(csv_name, intermediate=True)
+            cumulative_csvf = self.csv_open(csv_name)
+            cumulative_header = ['datum', 'kraj_nuts_kod', 'kumulativni_pocet_nakazenych']
+            cumulative_writer = self.get_csv_writer(cumulative_csvf, cumulative_header)
         for doc in cursor:
+            if export_intermediate:
+                cumulative_writer.writerow([
+                    doc['datum'],
+                    doc['kraj_nuts_kod'],
+                    doc['kumulativni_pocet_nakazenych']
+                ])
+
             if nuts == doc['kraj_nuts_kod']:
                 if zacatek is not None:
                     nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - nakazeni_zacatek
@@ -255,7 +280,7 @@ class CSVCreator():
                         doc['datum'],
                         doc['kraj_nuts_kod'],
                         self.kraje.get_nazev(doc['kraj_nuts_kod']),
-                        region_populations.get(doc['kraj_nuts_kod'], None),
+                        region_populations[doc['kraj_nuts_kod']],
                         nakazeni_prirustek
                     ])
                     zacatek = None
@@ -266,6 +291,9 @@ class CSVCreator():
 
             zacatek = doc['datum']
             nakazeni_zacatek = doc['kumulativni_pocet_nakazenych']
+
+        if export_intermediate:
+            cumulative_csvf.close()
 
         return count
 
@@ -696,9 +724,12 @@ class CSVCreator():
         self.query_custom1()
         self.query_custom2()
 
-    def log_csv(self, csv_name: str) -> None:
+    def log_csv(self, csv_name: str, intermediate: bool = False) -> None:
         if self.log:
-            print('Creating %s' % csv_name + '.csv')
+            if not intermediate:
+                print('Creating %s' % csv_name + '.csv', flush=True)
+            else:
+                print('  Exporting intermediate %s' % csv_name + '.csv', flush=True)
 
     def log_head(self, cursor, count: int = 2) -> None:
         i = 0
@@ -712,8 +743,8 @@ class CSVCreator():
                 sys.exit()
 
 if __name__ == '__main__':
-    creator = CSVCreator()
+    creator = CSVCreator(compatibility=True)
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_C1()
+    #creator.query_B1()
