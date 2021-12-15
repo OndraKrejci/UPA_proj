@@ -62,10 +62,25 @@ def plot_A2():
     #replace NaN with Cudzinci
     df['kraj_nazev'].replace(np.nan, 'Cudzinci', regex=True, inplace=True)
 
-    #drop outliers simple
+    #drop outliers
+    Q1 = df['vek'].quantile(0.25)
+    Q3 = df['vek'].quantile(0.75)
+    IQR = Q3 - Q1
+
+    df = df[~((df['vek'] < (Q1 - 1.5 * IQR)) |(df['vek'] > (Q3 + 1.5 * IQR)))]
+
     df.drop(df.loc[df['vek']>105].index, inplace=True)
 
-    sns.boxplot(x="kraj_nazev", y="vek", data=df)
+    ax = sns.boxplot(x="kraj_nazev", y="vek", data=df)
+    for label in ax.get_xticklabels(which='both'):
+        label.set(rotation=30, horizontalalignment='right')
+
+    ax.set_title('Dotaz A2')
+    ax.legend()
+    plt.subplots_adjust(top=0.92, bottom=0.25)
+
+    plt.savefig("A2.svg", dpi=300)
+
     plt.show()
 
 def plot_B1():
@@ -177,8 +192,8 @@ def plot_D2():
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.show()
 
-plot_A1()
-#plot_A2()
+#plot_A1()
+plot_A2()
 #plot_B1()
 #print_B1()
 #prepare_C1()
