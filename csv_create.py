@@ -7,11 +7,12 @@
 
 import csv
 import sys
+import argparse
 
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
 from pprint import pprint
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
 from datetime import datetime
@@ -33,8 +34,11 @@ class CSVCreator():
 
     FIRST_QUARTER_DATE = DateParser.parse('2020-10-01')
 
-    def __init__(self, compatibility: bool = False, log: bool = True) -> None:
-        self.dbc = DBC()
+    def __init__(self, compatibility: bool = False, log: bool = True, dbc: Union[DBC, None] = None) -> None:
+        if dbc is None:
+            self.dbc = DBC()
+        else:
+            self.dbc = dbc
 
         self.kraje = Kraje()
         self.orp = ORP()
@@ -699,6 +703,23 @@ class CSVCreator():
             if i > count:
                 break
         sys.exit()
+
+def main() -> None:
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-H', '--host', dest='host', help='DB server host', default=DBC.DEFAULT_HOST, type=str, required=False)
+    argparser.add_argument('-p', '--port', dest='port', help='DB server port number', default=DBC.DEFAULT_PORT, type=int, required=False)
+    argparser.add_argument('-t', '--timeout', dest='timeout', help='timeout for server connection', default=None, type=int, required=False)
+
+    args, _ = argparser.parse_known_args(sys.argv)
+
+    dbc = DBC(args.host, args.port, args.timeout)
+    csv_creator = CSVCreator(compatibility=True, log=True, dbc=dbc)
+
+    try:
+        csv_creator.create_all_csv_files()
+    except CSVCreatorException as exc:
+        print(exc)
+        sys.exit(2)
 
 if __name__ == '__main__':
     creator = CSVCreator(compatibility=True)
