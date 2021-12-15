@@ -162,15 +162,18 @@ def print_B1(df):
 
     dates = df["datum_zacatek"].unique()
 
-    for x in dates:
-        mask = df['datum_zacatek'] == x
-        ndf = df[mask].copy()
-        ndf.index = np.arange(1, len(ndf)+1)
-        ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
-        print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][1])).strftime("%b %Y"))
-        ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
+    with open('B1.txt', 'w') as f:
+        for x in dates:
+            mask = df['datum_zacatek'] == x
+            ndf = df[mask].copy()
+            ndf.index = np.arange(0, len(ndf))
+            ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
+            print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
+            ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
+            ndf.index = np.arange(1, len(ndf)+1)
+            print(ndf, file=f)
+            print(file=f)
 
-        print(ndf)
 
 def prepare_C1():
     df = pd.read_csv('data_csv/C1-orp_ctvrtleti.csv', delimiter=";")
@@ -186,7 +189,7 @@ def prepare_C1():
         ndf = df[mask].copy()
         ndf.index = np.arange(0, len(ndf))
 
-        y = ndf[ndf.columns[4:7]].copy()
+        y = ndf[['0-14', '15-59', '60+']].copy()
 
         down_quantiles = y.quantile(0.05)
         outliers_low = (y < down_quantiles)
@@ -208,7 +211,7 @@ def prepare_C1():
 
         ndf['pocet_davek_discrete'] = pd.qcut(ndf['pocet_davek'], q=3, duplicates='drop', labels=["bad", "medium", "good"])
 
-        ndf[ndf.columns[4:7]] = ndf[ndf.columns[4:7]].apply(np.int64)
+        ndf[['0-14', '15-59', '60+']] = ndf[['0-14', '15-59', '60+']].apply(np.int64)
 
 
         fdf = pd.concat([fdf,ndf])
@@ -217,7 +220,7 @@ def prepare_C1():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 1000)
-    print(fdf)
+    fdf.to_csv('C1.csv', index=False, sep=';')
 
 
 
@@ -246,7 +249,7 @@ def plot_D2():
 plot_A1()
 plot_A2()
 prepare_B1()
-#prepare_C1()
+prepare_C1()
 #plot_D1()
 #plot_D2()
 
