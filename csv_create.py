@@ -140,8 +140,8 @@ class CSVCreator():
 
             if kraj_nuts_kod is None:
                 if doc['nakaza_v_zahranici']:
-                    kraj_nuts_kod = 'neznamy-zahranici'
-                    kraj_nazev = 'neznámý (nákaza v zahraničí)'
+                    kraj_nuts_kod = 'zahranici'
+                    kraj_nazev = 'zahraničí'
                 else:
                     kraj_nuts_kod = 'neznamy'
                     kraj_nazev = 'neznámý'
