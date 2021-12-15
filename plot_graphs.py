@@ -30,8 +30,8 @@ def plot_A1():
     fig = plt.figure(figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
-    ax.plot(df['zacatek'].to_numpy(), df['nakazeni'].to_numpy(), label='Nakazení')
-    ax.plot(df['zacatek'].to_numpy(), df['vyleceni'].to_numpy(), label='Vyliečení')
+    ax.plot(df['zacatek'].to_numpy(), df['nakazeni'].to_numpy(), label='Nakažení')
+    ax.plot(df['zacatek'].to_numpy(), df['vyleceni'].to_numpy(), label='Vyléčení')
     ax.plot(df['zacatek'].to_numpy(), df['hospitalizovani'].to_numpy(), label='Hospitalizovaní')
     ax.plot(df['zacatek'].to_numpy(), df['testy'].to_numpy(), label='Testy')
 
@@ -61,8 +61,8 @@ def plot_A1():
 def plot_A2():
     df = pd.read_csv('data_csv/A2-osoby_nakazeni_kraj.csv', delimiter=";")
 
-    #replace NaN with Cudzinci
-    df['kraj_nazev'].replace(np.nan, 'Cudzinci', regex=True, inplace=True)
+    #replace NaN
+    df['kraj_nazev'].replace(np.nan, 'neznámý', regex=True, inplace=True)
 
     #drop outliers
     Q1 = df['vek'].quantile(0.25)
@@ -74,6 +74,7 @@ def plot_A2():
     fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
 
     ax = sns.boxplot(ax=ax, x="kraj_nazev", y="vek", data=df)
+    ax.set(xlabel=None, ylabel='Věk')
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
 
@@ -85,7 +86,6 @@ def plot_A2():
     #plt.show()
 
 def prepare_B1():
-
     df = pd.read_csv('data_csv/B1-nakazeni_kumulativne_kraj.csv', delimiter=";")
 
     df['datum'] = pd.to_datetime(df['datum'])
@@ -123,10 +123,10 @@ def plot_B1(df):
     ind = np.arange(df.shape[0])
     width = 0.4
 
-    ax.plot(df['kraj_nazev'].to_numpy(), df['pomer'].to_numpy(), color='g', label="Pomer nakazeny/pocet obyvatelov")
+    ax.plot(df['kraj_nazev'].to_numpy(), df['pomer'].to_numpy(), color='g', label="Poměr nakažení/počet obyvatel")
     ax2 = ax.twinx()
-    ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="pocet obyvatelov")
-    ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakazeny")
+    ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="počet obyvatel")
+    ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakažení")
 
     ax2.set_ylim(0, 1600000)
     ax.set_ylim(0.051, 0.119)
@@ -135,7 +135,7 @@ def plot_B1(df):
         label.set(rotation=30, horizontalalignment='right')
     ax.set_xticklabels(df['kraj_nazev'].to_numpy())
 
-    ax.set_ylabel('Nakazeny na pocet obyvatelov')
+    ax.set_ylabel('Nakažení na počet obyvatel')
     ax2.set_ylabel('Počet')
     fig.suptitle('Dotaz B1', fontsize=20)
     ax.legend(loc = 'upper left')
@@ -228,7 +228,7 @@ def plot_D1():
     fig = plt.figure(figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
-    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Pomer covid/umrti")
+    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/úmrtí")
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
@@ -250,21 +250,22 @@ def plot_D2():
 
     fig = plt.figure(figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
-    ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy(), label="Pomer")
+    ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/populace")
 
     ax.set_yscale('log')
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=3))
     ax.set_ylim(0.0008, 10.9)
 
     fig.suptitle('Dotaz D2', fontsize=20)
-    plt.xlabel('Vek')
+    plt.xlabel('Věk')
     ax.legend()
     plt.savefig("D2.svg", dpi=300)
 
-plot_A1()
-plot_A2()
-prepare_B1()
-prepare_C1()
-plot_D1()
-plot_D2()
-plt.show()
+if __name__ == '__main__':
+    plot_A1()
+    plot_A2()
+    prepare_B1()
+    prepare_C1()
+    plot_D1()
+    plot_D2()
+    plt.show()
