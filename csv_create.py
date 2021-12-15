@@ -288,8 +288,8 @@ class CSVCreator():
                     writer.writerow([
                         dates[pos],
                         dates[pos + 1],
+                        self.orp.get_orp_kod(orp['orp_nazev']), # code according to the CSU ORP codebook
                         orp['orp_kod'],
-                        self.orp.get_orp_kod(orp['orp_nazev']),
                         orp['orp_nazev'],
                         orp['0-14'],
                         orp['15-59'],
@@ -716,4 +716,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_custom2()
+    #creator.query_C1()
