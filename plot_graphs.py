@@ -104,13 +104,6 @@ def prepare_B1():
     df['datum_konec'] = df['datum_konec'] - pd.Timedelta(days=1)
     df.rename({'datum': 'datum_zacatek'}, axis=1, inplace=True)
 
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', 1000)
-    pd.set_option('display.colheader_justify', 'center')
-    pd.set_option('display.precision', 5)
-    print(df)
-
     plot_B1(df)
     print_B1(df)
 
@@ -231,12 +224,24 @@ def plot_D1():
     df = pd.read_csv('data_csv/custom1-zemreli_cr.csv', delimiter=";")
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['zemreli_covid'] / df['zemreli']*100
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
 
-    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy())
-    plt.show()
+    fig = plt.figure(figsize=(10, 6), dpi=150)
+    ax = fig.add_subplot(1,1,1)
+
+    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Pomer covid/umrti")
+
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
+    ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
+    fig.suptitle('Dotaz D1', fontsize=20)
+    ax.legend()
+
+    for label in ax.get_xticklabels(which='both'):
+        label.set(rotation=30, horizontalalignment='right')
+
+    plt.savefig("D1.svg", dpi=300)
 
 def plot_D2():
     df = pd.read_csv('data_csv/custom2-zemreli-vekove-kategorie.csv', delimiter=";")
@@ -245,14 +250,21 @@ def plot_D2():
 
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
-    ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy())
-    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
-    plt.show()
+    ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy(), label="Pomer")
+
+    ax.set_yscale('log')
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=3))
+    ax.set_ylim(0.0008, 10.9)
+
+    fig.suptitle('Dotaz D2', fontsize=20)
+    plt.xlabel('Vek')
+    ax.legend()
+    plt.savefig("D2.svg", dpi=300)
 
 plot_A1()
 plot_A2()
 prepare_B1()
 prepare_C1()
-#plot_D1()
-#plot_D2()
-
+plot_D1()
+plot_D2()
+plt.show()
