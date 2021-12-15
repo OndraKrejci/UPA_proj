@@ -2,6 +2,7 @@
 /*.csv
 /*.json
 /*.xml
+/*.zip
 
 /part1/data/*
 !/part1/data/orp-ciselnik.csv
