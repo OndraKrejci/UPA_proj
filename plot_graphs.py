@@ -248,7 +248,7 @@ def plot_D2():
 
     df['pomer'] = df['umrti_covid'] / df['pocet_obyvatel']*100
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
     ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy(), label="Pomer")
 
