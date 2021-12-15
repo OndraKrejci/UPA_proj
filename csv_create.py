@@ -8,13 +8,13 @@
 import csv
 import sys
 
-from datetime import datetime
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
 from pprint import pprint
 from typing import Dict, List, Tuple
 from io import TextIOWrapper
 from pymongo.command_cursor import CommandCursor
+from datetime import datetime
 
 from part1.db import DBC
 from part1.download import ensure_folder
@@ -58,11 +58,11 @@ class CSVCreator():
         month = relativedelta(months=1)
         day = relativedelta(days=1)
         dt = DateParser.parse('2020-04-01')
-        dt_now = datetime.now()
+        dt_end = DateParser.parse('2021-12-01')
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
 
-            while dt < dt_now:
+            while dt < dt_end:
                 next_dt = dt + month
                 month_end = next_dt - day
 
@@ -747,4 +747,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_B1()
+    #creator.query_A1()
