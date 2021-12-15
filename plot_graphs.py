@@ -16,13 +16,44 @@ import datetime
 import matplotlib.ticker as mtick
 from sklearn import preprocessing
 #from tabulate import tabulate
+from matplotlib.ticker import StrMethodFormatter, NullFormatter
+import matplotlib.dates as mdates
+from matplotlib.ticker import AutoMinorLocator
 
 def plot_A1():
     df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
 
     df['zacatek'] = pd.to_datetime(df['zacatek'])
 
-    plt.plot(df['zacatek'].to_numpy(), df[['nakazeni', 'vyleceni', 'hospitalizovani', 'testy']].to_numpy())
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+
+    ax.plot(df['zacatek'].to_numpy(), df['nakazeni'].to_numpy(), label='Nakazení')
+    ax.plot(df['zacatek'].to_numpy(), df['vyleceni'].to_numpy(), label='Vyliečení')
+    ax.plot(df['zacatek'].to_numpy(), df['hospitalizovani'].to_numpy(), label='Hospitalizovaní')
+    ax.plot(df['zacatek'].to_numpy(), df['testy'].to_numpy(), label='Testy')
+
+    ax.set_yscale('log')
+    ax.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
+    ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
+    ax.yaxis.set_minor_locator(mtick.LogLocator(base=10.0, numticks=6))
+    for label in ax.get_xticklabels(which='both'):
+        label.set(rotation=30, horizontalalignment='right')
+
+    ax.set_ylim(100, 2500000)
+    ax.set_xlim(df['zacatek'].iloc[0], df['zacatek'].iloc[-1])
+
+    plt.ylabel('Počet')
+    fig.suptitle('Dotaz A1', fontsize=20)
+    ax.legend()
+    plt.subplots_adjust( left=0.15, right=0.98)
+
+    plt.savefig("A1.svg", dpi=300)
+
     plt.show()
 
 def plot_A2():
@@ -146,11 +177,11 @@ def plot_D2():
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.show()
 
-#plot_A1()
+plot_A1()
 #plot_A2()
 #plot_B1()
 #print_B1()
 #prepare_C1()
 #plot_D1()
-plot_D2()
+#plot_D2()
 
