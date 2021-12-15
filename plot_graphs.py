@@ -135,10 +135,22 @@ def plot_D1():
     ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy())
     plt.show()
 
+def plot_D2():
+    df = pd.read_csv('data_csv/custom2-zemreli-vekove-kategorie.csv', delimiter=";")
+
+    df['pomer'] = df['umrti_covid'] / df['pocet_obyvatel']*100
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy())
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    plt.show()
+
 #plot_A1()
 #plot_A2()
 #plot_B1()
 #print_B1()
-prepare_C1()
+#prepare_C1()
 #plot_D1()
+plot_D2()
 
