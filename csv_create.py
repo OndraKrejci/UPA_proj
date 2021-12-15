@@ -164,7 +164,7 @@ class CSVCreator():
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
         total_quarters = 4
-        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, total_quarters)
+        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, total_quarters + 1, include_end=False)
         pipeline = [
             {
                 '$match': {
@@ -183,16 +183,20 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
+
+        regions_population = self.get_regions_population_total()
+
         header = ['datum', 'kraj_nuts_kod', 'kraj_nazev', 'kraj_populace', 'kumulativni_pocet_nakazenych']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
-            rows = self.write_query_B1_data(cursor, writer)
-
-        expected = (len(Kraje.NUTS3) * total_quarters * 2) # 2 = start and end of quarter
-        if rows != expected:
-            raise CSVCreatorException(
-                'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
-            )
+            for doc in cursor:
+                writer.writerow([
+                    doc['datum'],
+                    doc['kraj_nuts_kod'],
+                    self.kraje.get_nazev(doc['kraj_nuts_kod']),
+                    regions_population[doc['kraj_nuts_kod']],
+                    doc['kumulativni_pocet_nakazenych']
+                ])
 
     def get_population_collection_max_date(self) -> int:
         coll_name = 'obyvatelstvo_kraj'
@@ -245,22 +249,6 @@ class CSVCreator():
 
         regions_population = {x['kraj_nuts_kod']: x['populace'] for x in regions_population}
         return regions_population
-
-    def write_query_B1_data(self, cursor: CommandCursor, writer) -> int:
-        count = 0
-        regions_population = self.get_regions_population_total()
-        for doc in cursor:
-            writer.writerow([
-                doc['datum'],
-                doc['kraj_nuts_kod'],
-                self.kraje.get_nazev(doc['kraj_nuts_kod']),
-                regions_population[doc['kraj_nuts_kod']],
-                doc['kumulativni_pocet_nakazenych']
-            ])
-
-            count += 1
-
-        return count
 
     def query_C1(self) -> None:
         csv_name = 'C1-orp_ctvrtleti'
@@ -655,7 +643,7 @@ class CSVCreator():
 
         return orps
 
-    def get_quarters_dates(self, start: datetime, quarters: int) -> List[datetime]:
+    def get_quarters_dates(self, start: datetime, quarters: int, include_end: bool = True) -> List[datetime]:
         dt = start
         months3 = relativedelta(months=3)
         day = relativedelta(days=1)
@@ -663,7 +651,8 @@ class CSVCreator():
         for _ in range(quarters):
             dates.append(dt)
             dt += months3
-            dates.append(dt - day)
+            if include_end:
+                dates.append(dt - day)
 
         return dates
 
@@ -726,4 +715,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_D1()
+    #creator.query_B1()
