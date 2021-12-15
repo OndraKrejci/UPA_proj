@@ -277,7 +277,7 @@ class CSVCreator():
             for orp in orps:
                 for i in range(total_quarters):
                     pos = i * 2
-                    infected, vaccinations = self.get_ORP_infected_vaccinations(orp['orp_kod'], dates[pos], dates[pos + 1])
+                    infected, vaccinations = self.get_ORP_infected_and_vaccinations(orp['orp_kod'], dates[pos], dates[pos + 1])
                     writer.writerow([
                         dates[pos],
                         dates[pos + 1],
@@ -298,7 +298,7 @@ class CSVCreator():
                 'Loaded invalid amount of rows for query C1 (actual: %i, expected: %i)' % (count, expected)
             )
 
-    def get_ORP_infected_vaccinations(self, orp_code: int, start: datetime, end: datetime) -> Tuple[int, int]:
+    def get_ORP_infected_and_vaccinations(self, orp_code: int, start: datetime, end: datetime) -> Tuple[int, int]:
         coll = self.dbc.get_collection('nakazeni_orp')
         pipeline = [
             {
