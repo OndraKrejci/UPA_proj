@@ -159,8 +159,8 @@ class CSVCreator():
 
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
-        quarters = 4
-        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, quarters)
+        total_quarters = 4
+        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, total_quarters)
         pipeline = [
             {
                 '$match': {
@@ -184,7 +184,7 @@ class CSVCreator():
             writer = self.get_csv_writer(file, header)
             rows = self.write_query_B1_data(cursor, writer)
 
-        expected = (len(Kraje.NUTS3) * quarters * 2) # 2 = start and end of quarter
+        expected = (len(Kraje.NUTS3) * total_quarters * 2) # 2 = start and end of quarter
         if rows != expected:
             raise CSVCreatorException(
                 'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
@@ -263,15 +263,15 @@ class CSVCreator():
         self.log_csv(csv_name)
 
         orps = self.map_to_invalid_ORP_codes(self.get_most_populous_ORPs())
-        quarters = 4
-        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, quarters)
+        total_quarters = 4
+        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, total_quarters)
 
         count = 0
         header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'mzcr_orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             for orp in orps:
-                for i in range(quarters):
+                for i in range(total_quarters):
                     pos = i * 2
                     infected, vaccinations = self.get_ORP_infected_vaccinations(orp['orp_kod'], dates[pos], dates[pos + 1])
                     writer.writerow([
@@ -288,7 +288,7 @@ class CSVCreator():
                     ])
                     count += 1
 
-        expected = (quarters * 50)
+        expected = (total_quarters * 50)
         if count != expected:
             raise CSVCreatorException(
                 'Loaded invalid amount of rows for query C1 (actual: %i, expected: %i)' % (count, expected)
