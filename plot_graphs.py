@@ -19,13 +19,15 @@ from sklearn import preprocessing
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.dates as mdates
 from matplotlib.ticker import AutoMinorLocator
+import os
+from matplotlib.pyplot import figure
 
 def plot_A1():
     df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
 
     df['zacatek'] = pd.to_datetime(df['zacatek'])
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
     ax.plot(df['zacatek'].to_numpy(), df['nakazeni'].to_numpy(), label='Nakazení')
@@ -54,7 +56,7 @@ def plot_A1():
 
     plt.savefig("A1.svg", dpi=300)
 
-    plt.show()
+    #plt.show()
 
 def plot_A2():
     df = pd.read_csv('data_csv/A2-osoby_nakazeni_kraj.csv', delimiter=";")
@@ -69,39 +71,87 @@ def plot_A2():
 
     df = df[~((df['vek'] < (Q1 - 1.5 * IQR)) |(df['vek'] > (Q3 + 1.5 * IQR)))]
 
-    df.drop(df.loc[df['vek']>105].index, inplace=True)
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
 
-    ax = sns.boxplot(x="kraj_nazev", y="vek", data=df)
+    ax = sns.boxplot(ax=ax, x="kraj_nazev", y="vek", data=df)
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
 
     ax.set_title('Dotaz A2')
-    ax.legend()
-    plt.subplots_adjust(top=0.92, bottom=0.25)
+    plt.subplots_adjust(top=0.92, bottom=0.25, right=0.96)
 
     plt.savefig("A2.svg", dpi=300)
 
-    plt.show()
+    #plt.show()
 
-def plot_B1():
-    df = pd.read_csv('data_csv/B1-prirustky_kraj.csv', delimiter=";")
+def prepare_B1():
+    if os.path.isfile('data_csv/B1-prirustky_kraj.csv'):
+        df = pd.read_csv('data_csv/B1-prirustky_kraj.csv', delimiter=";")
+        plot_B1(df)
+        print_B1(df)
+    else:
+
+        nakazeni_zacatek = None
+        nuts = None
+        zacatek = None
+        for doc in cursor:
+            if nuts == doc['kraj_nuts_kod']:
+                if zacatek is not None:
+                    nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - nakazeni_zacatek
+                    writer.writerow([
+                        zacatek,
+                        doc['datum'],
+                        doc['kraj_nuts_kod'],
+                        nakazeni_prirustek
+                    ])
+                    zacatek = None
+                    continue
+            else:
+                nuts = doc['kraj_nuts_kod']
+
+            zacatek = doc['datum']
+            nakazeni_zacatek = doc['kumulativni_pocet_nakazenych']
+
+
+def plot_B1(df):
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     mask = df['datum_zacatek'] == '2020-10-01'
-    df = df.loc[mask]
+    df = df[mask].copy()
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     df.sort_values(by=['pomer'], inplace=True, ascending=False)
-    ax = plt.subplot(111)
-    ind = np.arange(df.shape[0])  # the x locations for the groups
-    width = 0.2
-    ax.bar(ind, df['kraj_populace'].to_numpy(), width=0.2, color='b', align='center')
-    ax.bar(ind + width, df['nakazeni_prirustek'].to_numpy(), width=0.2, color='r', align='center')
-    ax2 = ax.twinx()
-    ax2.plot(df['kraj_nazev'].to_numpy(), df['pomer'].to_numpy())
-    ax.set_xticklabels( df['kraj_nazev'].to_numpy() )
-    plt.show()
 
-def print_B1():
-    df = pd.read_csv('data_csv/B1-prirustky_kraj.csv', delimiter=";")
+    fig = plt.figure(figsize=(10, 6), dpi=150)
+    ax = fig.add_subplot(1,1,1)
+
+    ind = np.arange(df.shape[0])
+    width = 0.4
+
+    ax.plot(df['kraj_nazev'].to_numpy(), df['pomer'].to_numpy(), color='g', label="Pomer nakazeny/pocet obyvatelov")
+    ax2 = ax.twinx()
+    ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="pocet obyvatelov")
+    ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakazeny")
+
+    ax2.set_ylim(0, 1700000)
+    ax.set_ylim(0.045, 0.085)
+
+    for label in ax.get_xticklabels(which='both'):
+        label.set(rotation=30, horizontalalignment='right')
+    ax.set_xticklabels(df['kraj_nazev'].to_numpy())
+
+    ax.set_ylabel('Nakazeny na pocet obyvatelov')
+    ax2.set_ylabel('Počet')
+    fig.suptitle('Dotaz B1', fontsize=20)
+    ax.legend(loc = 'upper left')
+    ax2.legend()
+
+    plt.subplots_adjust(top=0.92, bottom=0.25, right=0.85)
+
+    plt.savefig("B1.svg", dpi=300)
+
+    #plt.show()
+
+def print_B1(df):
+
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     pd.set_option('display.max_rows', None)
@@ -113,12 +163,13 @@ def print_B1():
     dates = df["datum_zacatek"].unique()
 
     for x in dates:
-        print(x)
         mask = df['datum_zacatek'] == x
         ndf = df[mask].copy()
-        ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
-        ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
         ndf.index = np.arange(1, len(ndf)+1)
+        ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
+        print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][1])).strftime("%b %Y"))
+        ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
+
         print(ndf)
 
 def prepare_C1():
@@ -192,10 +243,9 @@ def plot_D2():
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.show()
 
-#plot_A1()
+plot_A1()
 plot_A2()
-#plot_B1()
-#print_B1()
+prepare_B1()
 #prepare_C1()
 #plot_D1()
 #plot_D2()
