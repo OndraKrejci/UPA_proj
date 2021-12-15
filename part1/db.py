@@ -44,7 +44,7 @@ class DBC:
         try:
             self.conn.admin.command('ping')
         except pymongo.errors.ConnectionFailure:
-            print('Failed to connect to the server at %s:%i' % (host, port), file=sys.stderr)
+            print('Failed to connect to the database server at %s:%i' % (host, port), file=sys.stderr)
             sys.exit(1)
 
         self.db = self.conn[DBC.DB_NAME]
