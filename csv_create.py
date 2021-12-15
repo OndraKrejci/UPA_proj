@@ -188,7 +188,7 @@ class CSVCreator():
                 'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
             )
 
-    def get_regions_population_max_date(self) -> int:
+    def get_population_collection_max_date(self) -> int:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
 
         pipeline = [
@@ -206,7 +206,7 @@ class CSVCreator():
     def get_regions_population_total(self) -> Dict[str, int]:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
 
-        max_datum = self.get_regions_population_max_date()
+        max_datum = self.get_population_collection_max_date()
 
         pipeline = [
             {
@@ -561,70 +561,60 @@ class CSVCreator():
 
         coll = self.dbc.get_collection('umrti_vek_okres_kraj')
 
-        region_population_groups = self.get_regions_population_groups()
+        population_groups = self.get_cze_population_groups()
 
-        header = ['kraj_nuts_kod', 'kraj_nazev', 'vekova_kategorie', 'pocet_obyvatel', 'umrti_covid']
+        header = ['vekova_kategorie', 'pocet_obyvatel', 'umrti_covid']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
-            for nuts_code, groups in region_population_groups.items():
-                doc = {
-                    'kraj_nuts_kod': nuts_code,
-                    'kraj_nazev': self.kraje.get_nazev(nuts_code),
-                    'vekova_kateogrie': None,
-                    'pocet_obyvatel': None,
-                    'umrti_covid': None
-                }
-                for group_name, population in groups.items():
-                    doc['vekova_kategorie'] = group_name
-                    doc['pocet_obyvatel'] = population
-
-                    if group_name != '90+':
-                        start, end = (int(age) for age in group_name.split('-'))
-                        and_obj = [
-                            {'kraj_nuts_kod': {'$eq': nuts_code}},
-                            {'vek': {'$gte': start}},
-                            {'vek': {'$lte': end}}
-                        ]
-                    else:
-                        and_obj = [
-                            {'kraj_nuts_kod': {'$eq': nuts_code}},
-                            {'vek': {'$gte': 90}}
-                        ]
-
-                    pipeline = [
-                        {
-                            '$match': {
-                                '$and': and_obj
-                            }
-                        },
-                        {
-                            '$count': 'umrti'
-                        }
+            for group_name, population in population_groups.items():
+                if group_name != '90+':
+                    start, end = (int(age) for age in group_name.split('-'))
+                    and_cond = [
+                        {'vek': {'$gte': start}},
+                        {'vek': {'$lte': end}}
                     ]
-                    cursor = coll.aggregate(pipeline)
-                    try:
-                        doc_count = cursor.next()
-                        doc['umrti_covid'] = doc_count['umrti']
-                    except StopIteration:
-                        doc['umrti_covid'] = 0
-                    self.write_query_custom2_row(doc, writer)
+                else:
+                    and_cond = [
+                        {'vek': {'$gte': 90}}
+                    ]
+
+                pipeline = [
+                    {
+                        '$match': {
+                            '$and': and_cond
+                        }
+                    },
+                    {
+                        '$count': 'umrti'
+                    }
+                ]
+                cursor = coll.aggregate(pipeline)
+                try:
+                    doc_count = cursor.next()
+                    umrti_covid = doc_count['umrti']
+                except StopIteration:
+                    umrti_covid = 0
+                
+                doc = {
+                    'vekova_kategorie': group_name,
+                    'pocet_obyvatel': population,
+                    'umrti_covid': umrti_covid
+                }
+                self.write_query_custom2_row(doc, writer)
 
     def write_query_custom2_row(self, doc: dict, writer) -> None:
         writer.writerow([
-            doc['kraj_nuts_kod'],
-            doc['kraj_nazev'],
             doc['vekova_kategorie'],
             doc['pocet_obyvatel'],
             doc['umrti_covid']
         ])
 
-    def get_regions_population_groups(self) -> Dict[str, dict]:
+    def get_cze_population_groups(self) -> Dict[str, int]:
         coll = self.dbc.get_collection('obyvatelstvo_kraj')
 
-        max_datum = self.get_regions_population_max_date()
+        max_datum = self.get_population_collection_max_date()
 
-        region_age_groups = {nuts_code: {} for nuts_code in self.kraje.NUTS3.keys()}
-        region_count = 14
+        age_groups = {}
 
         i = 0
         while i <= 90:
@@ -649,36 +639,21 @@ class CSVCreator():
                 },
                 {
                     '$group': {
-                        '_id': '$nuts_kod',
+                        '_id': None,
                         'pocet': {'$sum': '$pocet'}
                     }
-                },
-                {
-                    '$project': {
-                        'kraj_nuts_kod': '$_id',
-                        'pocet': '$pocet'
-                    }
-                },
-                {
-                    '$sort': {'datum': -1}
                 }
             ]
             cursor = coll.aggregate(pipeline)
-            region_populations = list(cursor)
+            try:
+                doc = cursor.next()
+                age_groups[age_group] = doc['pocet']
+            except StopIteration:
+                raise CSVCreatorException('Failed to retrieve population for age groups %s, %s'% (keys[0], keys[1]))
 
-            count = len(region_populations)
-            if count != region_count:
-                raise CSVCreatorException(
-                    'Failed to retrieve populations of all regions for age groups %s, %s (expected: %i, retrieved: %i)'
-                    % (keys[0], keys[1], region_count, count)
-                )
-
-            for doc in region_populations:
-                region_age_groups[doc['kraj_nuts_kod']][age_group] = doc['pocet']
-            
             i += 10
 
-        return region_age_groups
+        return age_groups
 
     def map_to_invalid_ORP_codes(self, orps: List[dict]) -> List[dict]:
         for orp in orps:
@@ -741,4 +716,4 @@ if __name__ == '__main__':
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_C1()
+    #creator.query_custom2()
