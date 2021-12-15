@@ -31,6 +31,8 @@ class CSVCreator():
     COMPATIBILITY_VERSION = '3.4.24'
     NEW_VERSION = '5'
 
+    FIRST_QUARTER_DATE = DateParser.parse('2020-10-01')
+
     def __init__(self, compatibility: bool = False, log: bool = True) -> None:
         self.dbc = DBC()
 
@@ -151,14 +153,14 @@ class CSVCreator():
 
         return count
 
-    def query_B1(self, export_intermediate: bool = True) -> None:
-        csv_name = 'B1-prirustky_kraj'
+    def query_B1(self) -> None:
+        csv_name = 'B1-nakazeni_kumulativne_kraj'
         self.log_csv(csv_name)
 
         coll = self.dbc.get_collection('nakazeni_vyleceni_umrti_testy_kraj')
 
         quarters = 4
-        dates = self.get_quarters_dates(DateParser.parse('2020-10-01'), quarters)
+        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, quarters)
         pipeline = [
             {
                 '$match': {
@@ -177,19 +179,20 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
-        header = ['datum_zacatek', 'datum_konec', 'kraj_nuts_kod', 'kraj_nazev', 'kraj_populace', 'nakazeni_prirustek']
+        header = ['datum', 'kraj_nuts_kod', 'kraj_nazev', 'kraj_populace', 'kumulativni_pocet_nakazenych']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
-            rows = self.write_query_B1_data(cursor, writer, export_intermediate)
+            rows = self.write_query_B1_data(cursor, writer)
 
-        expected = (len(Kraje.NUTS3) * quarters)
+        expected = (len(Kraje.NUTS3) * quarters * 2) # 2 = start and end of quarter
         if rows != expected:
             raise CSVCreatorException(
                 'Loaded invalid amount of rows for query B2 (actual: %i, expected: %i)' % (rows, expected)
             )
 
     def get_population_collection_max_date(self) -> int:
-        coll = self.dbc.get_collection('obyvatelstvo_kraj')
+        coll_name = 'obyvatelstvo_kraj'
+        coll = self.dbc.get_collection(coll_name)
 
         pipeline = [
             {
@@ -200,7 +203,10 @@ class CSVCreator():
             }
         ]
         cursor = coll.aggregate(pipeline)
-        doc = cursor.next()
+        try:
+            doc = cursor.next()
+        except StopIteration:
+            raise CSVCreatorException('Failed to load latest date from collection %s' % coll_name)
         return doc['max_datum']
 
     def get_regions_population_total(self) -> Dict[str, int]:
@@ -223,77 +229,32 @@ class CSVCreator():
                     'kraj_nuts_kod': '$nuts_kod',
                     'populace': '$pocet'
                 }
-            },
-            {
-                '$sort': {'datum': -1}
             }
         ]
         cursor = coll.aggregate(pipeline)
-        region_populations = list(cursor)
+        regions_population = list(cursor)
 
-        count = len(region_populations)
-        expected = 14
+        count = len(regions_population)
+        expected = len(Kraje.NUTS3)
         if count != expected:
-            raise CSVCreatorException('Failed to retrieve populations of all regions (expected: %i, retrieved: %i)' % (expected, count))
+            raise CSVCreatorException('Failed to retrieve population of all regions (expected: %i, retrieved: %i)' % (expected, count))
 
-        region_populations = {x['kraj_nuts_kod']: x['populace'] for x in region_populations}
+        regions_population = {x['kraj_nuts_kod']: x['populace'] for x in regions_population}
+        return regions_population
 
-        return region_populations
-
-    def write_query_B1_data(self, cursor: CommandCursor, writer, export_intermediate: bool = True) -> int:
+    def write_query_B1_data(self, cursor: CommandCursor, writer) -> int:
         count = 0
-        region_populations = self.get_regions_population_total()
-        nakazeni_zacatek = None
-        nuts = None
-        zacatek = None
-        if export_intermediate:
-            csv_name = 'i_B1-populace-kraje'
-            self.log_csv(csv_name, intermediate=True)
-            with self.csv_open(csv_name) as population_csvf:
-                population_header = ['kraj_nuts_kod', 'kraj_nazev', 'populace']
-                population_writer = self.get_csv_writer(population_csvf, population_header)
-                for nuts_code, population in region_populations.items():
-                    population_writer.writerow([
-                        nuts_code,
-                        self.kraje.get_nazev(nuts_code),
-                        population
-                    ])
-
-            csv_name = 'i_B1-kumulativni-kraj'
-            self.log_csv(csv_name, intermediate=True)
-            cumulative_csvf = self.csv_open(csv_name)
-            cumulative_header = ['datum', 'kraj_nuts_kod', 'kumulativni_pocet_nakazenych']
-            cumulative_writer = self.get_csv_writer(cumulative_csvf, cumulative_header)
+        regions_population = self.get_regions_population_total()
         for doc in cursor:
-            if export_intermediate:
-                cumulative_writer.writerow([
-                    doc['datum'],
-                    doc['kraj_nuts_kod'],
-                    doc['kumulativni_pocet_nakazenych']
-                ])
+            writer.writerow([
+                doc['datum'],
+                doc['kraj_nuts_kod'],
+                self.kraje.get_nazev(doc['kraj_nuts_kod']),
+                regions_population[doc['kraj_nuts_kod']],
+                doc['kumulativni_pocet_nakazenych']
+            ])
 
-            if nuts == doc['kraj_nuts_kod']:
-                if zacatek is not None:
-                    nakazeni_prirustek = doc['kumulativni_pocet_nakazenych'] - nakazeni_zacatek
-                    writer.writerow([
-                        zacatek,
-                        doc['datum'],
-                        doc['kraj_nuts_kod'],
-                        self.kraje.get_nazev(doc['kraj_nuts_kod']),
-                        region_populations[doc['kraj_nuts_kod']],
-                        nakazeni_prirustek
-                    ])
-                    zacatek = None
-                    count += 1
-                    continue
-            else:
-                nuts = doc['kraj_nuts_kod']
-
-            zacatek = doc['datum']
-            nakazeni_zacatek = doc['kumulativni_pocet_nakazenych']
-
-        if export_intermediate:
-            cumulative_csvf.close()
+            count += 1
 
         return count
 
@@ -303,7 +264,7 @@ class CSVCreator():
 
         orps = self.map_to_invalid_ORP_codes(self.get_most_populous_ORPs())
         quarters = 4
-        dates = self.get_quarters_dates(DateParser.parse('2020-10-01'), quarters)
+        dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, quarters)
 
         count = 0
         header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'mzcr_orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
@@ -316,7 +277,7 @@ class CSVCreator():
                     writer.writerow([
                         dates[pos],
                         dates[pos + 1],
-                        self.orp.get_orp_kod(orp['orp_nazev']), # code according to the CSU ORP codebook
+                        self.orp.get_orp_kod(orp['orp_nazev']), # code according to the ČSÚ ORP codebook
                         orp['orp_kod'],
                         orp['orp_nazev'],
                         orp['0-14'],
@@ -724,27 +685,24 @@ class CSVCreator():
         self.query_custom1()
         self.query_custom2()
 
-    def log_csv(self, csv_name: str, intermediate: bool = False) -> None:
+    def log_csv(self, csv_name: str) -> None:
         if self.log:
-            if not intermediate:
-                print('Creating %s' % csv_name + '.csv', flush=True)
-            else:
-                print('  Exporting intermediate %s' % csv_name + '.csv', flush=True)
+            print('Creating %s' % csv_name + '.csv', flush=True)
 
-    def log_head(self, cursor, count: int = 2) -> None:
+    def log_head(self, cursor, count: int = 5) -> None:
         i = 0
         for doc in cursor:
-            #print(doc, end='\n\n')
             pprint(doc)
             print()
-            i += 1
 
+            i += 1
             if i > count:
-                sys.exit()
+                break
+        sys.exit()
 
 if __name__ == '__main__':
     creator = CSVCreator(compatibility=True)
     ensure_folder(creator.OUT_PATH)
     creator.create_all_csv_files()
 
-    #creator.query_A1()
+    #creator.query_B1()
