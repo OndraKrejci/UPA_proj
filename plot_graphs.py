@@ -28,7 +28,8 @@ def plot_A1():
 
     df['zacatek'] = pd.to_datetime(df['zacatek'])
 
-    fig = plt.figure(figsize=(10, 6), dpi=150)
+    figname = 'Dotaz A1'
+    fig = plt.figure(figname, figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
     ax.plot(df['zacatek'].to_numpy(), df['nakazeni'].to_numpy(), label='Nakažení')
@@ -51,7 +52,7 @@ def plot_A1():
     ax.set_xlim(df['zacatek'].iloc[0], df['zacatek'].iloc[-1])
 
     plt.ylabel('Počet')
-    fig.suptitle('Dotaz A1', fontsize=20)
+    fig.suptitle(figname, fontsize=20)
     ax.legend()
     plt.subplots_adjust( left=0.15, right=0.98)
 
@@ -73,13 +74,15 @@ def plot_A2():
     df = df[~((df['vek'] < (Q1 - 1.5 * IQR)) |(df['vek'] > (Q3 + 1.5 * IQR)))]
 
     fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
+    figname = 'Dotaz A2'
+    fig.canvas.set_window_title(figname)
 
     ax = sns.boxplot(ax=ax, x="kraj_nazev", y="vek", data=df)
     ax.set(xlabel=None, ylabel='Věk')
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
 
-    ax.set_title('Dotaz A2')
+    ax.set_title(figname)
     plt.subplots_adjust(top=0.92, bottom=0.25, right=0.96)
 
     plt.savefig(get_ouput_path('A2.svg'), dpi=300)
@@ -114,7 +117,8 @@ def plot_B1(df):
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     df.sort_values(by=['pomer'], inplace=True, ascending=False)
 
-    fig = plt.figure(figsize=(10, 6), dpi=150)
+    figname = 'Dotaz B1'
+    fig = plt.figure(figname, figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
     ind = np.arange(df.shape[0])
@@ -137,7 +141,7 @@ def plot_B1(df):
 
     ax.set_ylabel('Poměr nakažení/počet obyvatel')
     ax2.set_ylabel('Počet')
-    fig.suptitle('Dotaz B1', fontsize=20)
+    fig.suptitle(figname, fontsize=20)
     ax.legend(loc = 'upper left')
     ax2.legend()
 
@@ -182,7 +186,8 @@ def plot_D1():
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['zemreli_covid'] / df['zemreli']*100
 
-    fig = plt.figure(figsize=(10, 6), dpi=150)
+    figname = 'Dotaz D1'
+    fig = plt.figure(figname, figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
     ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/úmrtí")
@@ -192,7 +197,7 @@ def plot_D1():
     ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=1))
-    fig.suptitle('Dotaz D1', fontsize=20)
+    fig.suptitle(figname, fontsize=20)
     ax.legend()
 
     for label in ax.get_xticklabels(which='both'):
@@ -205,7 +210,8 @@ def plot_D2():
 
     df['pomer'] = df['umrti_covid'] / df['pocet_obyvatel']*100
 
-    fig = plt.figure(figsize=(10, 6), dpi=150)
+    figname = 'Dotaz D2'
+    fig = plt.figure(figname, figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
     ax.bar(df['vekova_kategorie'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/populace")
 
@@ -213,17 +219,19 @@ def plot_D2():
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=3))
     ax.set_ylim(0.0008, 10.9)
 
-    fig.suptitle('Dotaz D2', fontsize=20)
+    fig.suptitle(figname, fontsize=20)
     ax.set(xlabel='Věk', ylabel=None)
     ax.legend()
     plt.savefig(get_ouput_path('D2.svg'), dpi=300)
 
 if __name__ == '__main__':
+    df_B1 = prepare_B1()
+
     plot_A1()
     plot_A2()
-    df = prepare_B1()
-    plot_B1(df)
-    print_B1(df)
+    plot_B1(df_B1)
+    print_B1(df_B1)
     plot_D1()
     plot_D2()
+
     plt.show()
