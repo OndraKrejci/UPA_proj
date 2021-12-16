@@ -24,8 +24,13 @@ def get_ouput_path(fname):
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     return os.path.join(OUTPUT_FOLDER, fname)
 
+def df_from_csv(fname):
+    INPUT_FOLDER = 'data_csv/'
+    path = os.path.join(INPUT_FOLDER, fname)
+    return pd.read_csv(path, delimiter=';', encoding='utf-8')
+
 def plot_A1():
-    df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
+    df = df_from_csv('A1-covid_po_mesicich.csv')
 
     df['zacatek'] = pd.to_datetime(df['zacatek'])
 
@@ -62,7 +67,7 @@ def plot_A1():
     #plt.show()
 
 def plot_A2():
-    df = pd.read_csv('data_csv/A2-osoby_nakazeni_kraj.csv', delimiter=";")
+    df = df_from_csv('A2-osoby_nakazeni_kraj.csv')
 
     #replace NaN
     df['kraj_nazev'].replace(np.nan, 'neznámý', regex=True, inplace=True)
@@ -91,7 +96,7 @@ def plot_A2():
     #plt.show()
 
 def prepare_B1():
-    df = pd.read_csv('data_csv/B1-nakazeni_kumulativne_kraj.csv', delimiter=";")
+    df = df_from_csv('B1-nakazeni_kumulativne_kraj.csv')
 
     df['datum'] = pd.to_datetime(df['datum'])
     df['shift'] = df['kumulativni_pocet_nakazenych'].shift(periods=-1, fill_value=0)
@@ -190,7 +195,8 @@ def print_B1(df, export=False):
         f.close()
 
 def plot_D1():
-    df = pd.read_csv('data_csv/D1-zemreli_cr.csv', delimiter=";")
+    df = df_from_csv('D1-zemreli_cr.csv')
+
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['pomer'] = df['zemreli_covid'] / df['zemreli']*100
 
@@ -214,7 +220,7 @@ def plot_D1():
     plt.savefig(get_ouput_path('D1.svg'), dpi=300)
 
 def plot_D2():
-    df = pd.read_csv('data_csv/D2-zemreli_vekove_kategorie.csv', delimiter=";")
+    df = df_from_csv('D2-zemreli_vekove_kategorie.csv')
 
     df['pomer'] = df['umrti_covid'] / df['pocet_obyvatel']*100
 

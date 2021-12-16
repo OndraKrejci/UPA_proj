@@ -9,10 +9,11 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 
-from plot_graphs import get_ouput_path
+from plot_graphs import get_ouput_path, df_from_csv
 
 def prepare_C1():
-    df = pd.read_csv('data_csv/C1-orp_ctvrtleti.csv', delimiter=";")
+    df = df_from_csv('C1-orp_ctvrtleti.csv')
+
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
     df['datum_konec'] = pd.to_datetime(df['datum_konec'])
 
