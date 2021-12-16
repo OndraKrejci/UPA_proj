@@ -106,11 +106,7 @@ def prepare_B1():
     df['datum_konec'] = df['datum_konec'] - pd.Timedelta(days=1)
     df.rename({'datum': 'datum_zacatek'}, axis=1, inplace=True)
 
-    plot_B1(df)
-    print_B1(df)
-
-
-
+    return df
 
 def plot_B1(df):
     dates = df["datum_zacatek"].unique()
@@ -268,7 +264,9 @@ def plot_D2():
 if __name__ == '__main__':
     plot_A1()
     plot_A2()
-    prepare_B1()
+    df = prepare_B1()
+    plot_B1(df)
+    print_B1(df)
     prepare_C1()
     plot_D1()
     plot_D2()
