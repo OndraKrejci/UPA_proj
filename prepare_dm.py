@@ -57,7 +57,7 @@ def prepare_C1():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 1000)
-    fdf.to_csv(get_ouput_path('C1.csv'), index=False, sep=';')
+    fdf.to_csv(get_ouput_path('C1-orp_ctvrtleti-upraveno.csv'), index=False, sep=';')
 
 if __name__ == '__main__':
     prepare_C1()

@@ -14,7 +14,6 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
 import os
-import sys
 import locale
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ.utf8')
@@ -168,7 +167,7 @@ def print_B1(df, export=False):
     dates = df["datum_zacatek"].unique()
 
     if export:
-        f = open(get_ouput_path('B1.txt'), 'w', encoding='utf-8')
+        f = open(get_ouput_path('B1-tabulky.txt'), 'w', encoding='utf-8')
 
     for x in dates:
         mask = df['datum_zacatek'] == x
@@ -190,7 +189,7 @@ def print_B1(df, export=False):
             },
             axis=1, inplace=True
         )
-        
+
         print(ndf)
         print()
         if export:
