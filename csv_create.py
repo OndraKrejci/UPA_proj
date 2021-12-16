@@ -259,7 +259,7 @@ class CSVCreator():
         dates = self.get_quarters_dates(self.FIRST_QUARTER_DATE, total_quarters)
 
         count = 0
-        header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'mzcr_orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
+        header = ['datum_zacatek', 'datum_konec', 'orp_kod', 'orp_nazev', '0-14', '15-59', '60+', 'nakazeni', 'pocet_davek']
         with self.csv_open(csv_name) as file:
             writer = self.get_csv_writer(file, header)
             for orp in orps:
@@ -270,7 +270,6 @@ class CSVCreator():
                         dates[pos],
                         dates[pos + 1],
                         self.orp.get_orp_kod(orp['orp_nazev']), # code according to the ČSÚ ORP codebook
-                        orp['orp_kod'],
                         orp['orp_nazev'],
                         orp['0-14'],
                         orp['15-59'],
