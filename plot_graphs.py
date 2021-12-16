@@ -133,6 +133,7 @@ def plot_B1(df):
 
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
+    ax.xaxis.set_major_locator(mtick.FixedLocator(range(0, df['kraj_nazev'].unique().size)))
     ax.set_xticklabels(df['kraj_nazev'].to_numpy())
 
     ax.set_ylabel('Poměr nakažení/počet obyvatel')
