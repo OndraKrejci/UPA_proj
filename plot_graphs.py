@@ -10,20 +10,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import scipy as sp
-from matplotlib.dates import date2num
-import datetime
 import matplotlib.ticker as mtick
 from sklearn import preprocessing
-#from tabulate import tabulate
-from matplotlib.ticker import StrMethodFormatter, NullFormatter
+from matplotlib.ticker import StrMethodFormatter
 import matplotlib.dates as mdates
-from matplotlib.ticker import AutoMinorLocator
 import os
-from matplotlib.pyplot import figure
 
 import locale
-locale.setlocale(locale.LC_ALL, 'cs_CZ')
+locale.setlocale(locale.LC_ALL, 'cs_CZ.utf8')
 
 def get_ouput_path(fname):
     OUTPUT_FOLDER = 'output/'
@@ -136,6 +130,8 @@ def plot_B1(df):
     ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="počet obyvatel")
     ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakažení")
 
+    ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
+
     ax2.set_ylim(0, 1600000)
     ax.set_ylim(0.051, 0.119)
 
@@ -143,7 +139,7 @@ def plot_B1(df):
         label.set(rotation=30, horizontalalignment='right')
     ax.set_xticklabels(df['kraj_nazev'].to_numpy())
 
-    ax.set_ylabel('Nakažení na počet obyvatel')
+    ax.set_ylabel('Poměr nakažení/počet obyvatel')
     ax2.set_ylabel('Počet')
     fig.suptitle('Dotaz B1', fontsize=20)
     ax.legend(loc = 'upper left')
@@ -265,7 +261,7 @@ def plot_D2():
     ax.set_ylim(0.0008, 10.9)
 
     fig.suptitle('Dotaz D2', fontsize=20)
-    plt.xlabel('Věk')
+    ax.set(xlabel='Věk', ylabel=None)
     ax.legend()
     plt.savefig(get_ouput_path('D2.svg'), dpi=300)
 
@@ -276,4 +272,4 @@ if __name__ == '__main__':
     prepare_C1()
     plot_D1()
     plot_D2()
-    #plt.show()
+    plt.show()
