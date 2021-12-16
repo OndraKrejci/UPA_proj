@@ -82,7 +82,7 @@ def plot_A2():
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
 
-    ax.set_title(figname)
+    ax.set_title(figname, fontsize=20)
     plt.subplots_adjust(top=0.92, bottom=0.25, right=0.96)
 
     plt.savefig(get_ouput_path('A2.svg'), dpi=300)
