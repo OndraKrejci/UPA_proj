@@ -25,6 +25,11 @@ from matplotlib.pyplot import figure
 import locale
 locale.setlocale(locale.LC_ALL, 'cs_CZ')
 
+def get_ouput_path(fname):
+    OUTPUT_FOLDER = 'output/'
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    return os.path.join(OUTPUT_FOLDER, fname)
+
 def plot_A1():
     df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
 
@@ -57,7 +62,7 @@ def plot_A1():
     ax.legend()
     plt.subplots_adjust( left=0.15, right=0.98)
 
-    plt.savefig("A1.svg", dpi=300)
+    plt.savefig(get_ouput_path('A1.svg'), dpi=300)
 
     #plt.show()
 
@@ -84,7 +89,7 @@ def plot_A2():
     ax.set_title('Dotaz A2')
     plt.subplots_adjust(top=0.92, bottom=0.25, right=0.96)
 
-    plt.savefig("A2.svg", dpi=300)
+    plt.savefig(get_ouput_path('A2.svg'), dpi=300)
 
     #plt.show()
 
@@ -146,7 +151,7 @@ def plot_B1(df):
 
     plt.subplots_adjust(top=0.92, bottom=0.25, right=0.85)
 
-    plt.savefig("B1.svg", dpi=300)
+    plt.savefig(get_ouput_path('B1.svg'), dpi=300)
 
     #plt.show()
 
@@ -161,7 +166,7 @@ def print_B1(df):
 
     dates = df["datum_zacatek"].unique()
 
-    with open('B1.txt', 'w', encoding='utf-8') as f:
+    with open(get_ouput_path('B1.txt'), 'w', encoding='utf-8') as f:
         for x in dates:
             mask = df['datum_zacatek'] == x
             ndf = df[mask].copy()
@@ -219,7 +224,7 @@ def prepare_C1():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 1000)
-    fdf.to_csv('C1.csv', index=False, sep=';')
+    fdf.to_csv(get_ouput_path('C1.csv'), index=False, sep=';')
 
 
 
@@ -244,7 +249,7 @@ def plot_D1():
     for label in ax.get_xticklabels(which='both'):
         label.set(rotation=30, horizontalalignment='right')
 
-    plt.savefig("D1.svg", dpi=300)
+    plt.savefig(get_ouput_path('D1.svg'), dpi=300)
 
 def plot_D2():
     df = pd.read_csv('data_csv/D2-zemreli_vekove_kategorie.csv', delimiter=";")
@@ -262,7 +267,7 @@ def plot_D2():
     fig.suptitle('Dotaz D2', fontsize=20)
     plt.xlabel('Věk')
     ax.legend()
-    plt.savefig("D2.svg", dpi=300)
+    plt.savefig(get_ouput_path('D2.svg'), dpi=300)
 
 if __name__ == '__main__':
     plot_A1()
@@ -271,4 +276,4 @@ if __name__ == '__main__':
     prepare_C1()
     plot_D1()
     plot_D2()
-    plt.show()
+    #plt.show()

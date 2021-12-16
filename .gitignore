@@ -1,4 +1,6 @@
 
+__pycache__/
+
 /*.csv
 /*.json
 /*.xml
@@ -11,6 +13,6 @@
 !/part1/data/kraj-ciselnik.csv
 !/part1/data/ockovani_invalid_orp.csv
 
-/_local*
+/output/
 
-__pycache__/
+/_local*
