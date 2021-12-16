@@ -9,6 +9,7 @@
 !/part1/data/csu7700.csv
 !/part1/data/vazba-orp-kraj.csv
 !/part1/data/kraj-ciselnik.csv
+!/part1/data/ockovani_invalid_orp.csv
 
 /_local*
 
