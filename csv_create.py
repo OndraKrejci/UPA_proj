@@ -8,6 +8,7 @@
 import csv
 import sys
 import argparse
+import os
 
 from dateutil import parser as DateParser
 from dateutil.relativedelta import relativedelta
@@ -18,7 +19,7 @@ from pymongo.command_cursor import CommandCursor
 from datetime import datetime
 
 from part1.db import DBC
-from part1.download import ensure_folder
+from part1.download import ensure_folder, DATA_PATH
 from part1.ciselniky import ORP, Kraje, OBYVATELSTVO_KRAJ_CSU7700
 from part1.invalid_orp import InvalidORPCodeDetector
 
@@ -43,9 +44,8 @@ class CSVCreator():
         self.kraje = Kraje()
         self.orp = ORP()
 
-        self.invalid_orp_helper = InvalidORPCodeDetector(self.orp)
-        self.invalid_orp_set = self.invalid_orp_helper.get_invalid_orp_set('orp-ockovani-geografie.json')
-        self.invalid_orp_dict = self.invalid_orp_helper.invalid_orp_set_to_dict(self.invalid_orp_set)
+        invalid_orp_helper = InvalidORPCodeDetector(self.orp)
+        self.invalid_orp_dict = invalid_orp_helper.load_invalid_orp_dict(os.path.join(DATA_PATH, 'ockovani_invalid_orp.csv'))
 
         self.compatibility = compatibility
         self.log = log
@@ -310,7 +310,7 @@ class CSVCreator():
             doc_infected = cursor.next()
         except StopIteration:
             raise CSVCreatorException(
-                'Failed to retrieve infection data for ORP (%s) %i %s-%s' % (self.orp.get_orp_nazev(orp_code), orp_code, start, end)
+                'Failed to retrieve infection data for ORP (%s) %s %s-%s' % (self.orp.get_orp_nazev(orp_code), orp_code, start, end)
             )
 
         coll = self.dbc.get_collection('ockovani_orp')
