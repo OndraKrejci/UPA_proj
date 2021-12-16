@@ -1,10 +1,10 @@
 ##
-# @file main.py
+# @file db.py
 # @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
 # @author Oliver Kuník xkunik00@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 11/2021
-# Parse downloaded data and imports them to DB
+# Parse downloaded data and import them to DB
 
 import pymongo
 import sys

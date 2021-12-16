@@ -3,7 +3,7 @@
 # @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 12/2021
-# Detects unknown ORP codes in MZČR datasets
+# Detect unknown ORP codes in MZČR datasets
 
 import json
 import sys

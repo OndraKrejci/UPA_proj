@@ -4,7 +4,7 @@
 # @author Oliver Kuník xkunik00@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 11/2021
-# Downloads data
+# Download data
 
 import requests
 import os
