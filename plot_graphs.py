@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ##
 # @file plot_graphs.py
-# @author Oliver Kunik xkunik00@stud.fit.vutbr.cz
+# @author Oliver Kuník xkunik00@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 12/2021
 # Plot graphs from CSV files
@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.ticker as mtick
-from sklearn import preprocessing
 from matplotlib.ticker import StrMethodFormatter
 import matplotlib.dates as mdates
 import os
@@ -178,56 +177,6 @@ def print_B1(df):
             print(ndf, file=f)
             print(file=f)
 
-
-def prepare_C1():
-    df = pd.read_csv('data_csv/C1-orp_ctvrtleti.csv', delimiter=";")
-    df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
-    df['datum_konec'] = pd.to_datetime(df['datum_konec'])
-
-    dates = df["datum_zacatek"].unique()
-
-    fdf = pd.DataFrame()
-
-    for d in dates:
-        mask = df['datum_zacatek'] == d
-        ndf = df[mask].copy()
-        ndf.index = np.arange(0, len(ndf))
-
-        y = ndf[['0-14', '15-59', '60+']].copy()
-
-        Q1 = y.quantile(0.25)
-        Q3 = y.quantile(0.75)
-        IQR = Q3 - Q1
-        outliers_low = (y < Q1 - 1.5 * IQR)
-        y.mask(outliers_low, Q1 - 1.5 * IQR, axis=1, inplace=True)
-
-        outliers_high = (y > Q3 + 1.5 * IQR)
-        y.mask(outliers_high, Q3 + 1.5 * IQR, axis=1, inplace=True)
-
-        ndf.update(y)
-
-
-        x = ndf['nakazeni'].values #returns a numpy array
-        min_max_scaler = preprocessing.MinMaxScaler()
-        x = x.reshape(-1,1)
-        x_scaled = min_max_scaler.fit_transform(x)
-        ndf['nakazeni'].update(x_scaled.reshape(-1))
-
-        ndf['pocet_davek_discrete'] = pd.qcut(ndf['pocet_davek'], q=3, duplicates='drop', labels=["bad", "medium", "good"])
-
-        ndf[['0-14', '15-59', '60+']] = ndf[['0-14', '15-59', '60+']].apply(np.int64)
-
-
-        fdf = pd.concat([fdf,ndf])
-
-    fdf.index = np.arange(0, len(fdf))
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', 1000)
-    fdf.to_csv(get_ouput_path('C1.csv'), index=False, sep=';')
-
-
-
 def plot_D1():
     df = pd.read_csv('data_csv/D1-zemreli_cr.csv', delimiter=";")
     df['datum_zacatek'] = pd.to_datetime(df['datum_zacatek'])
@@ -275,7 +224,6 @@ if __name__ == '__main__':
     df = prepare_B1()
     plot_B1(df)
     print_B1(df)
-    prepare_C1()
     plot_D1()
     plot_D2()
     plt.show()
