@@ -148,7 +148,6 @@ def plot_B1(df):
     #plt.show()
 
 def print_B1(df):
-
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
@@ -167,6 +166,14 @@ def print_B1(df):
             print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
             ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
             ndf.index = np.arange(1, len(ndf)+1)
+            ndf.rename({
+                    'kraj_nazev': 'Název kraje',
+                    'kraj_populace': 'Počet obyvatel',
+                    'nakazeni_prirustek': 'Přírůstek nakažených',
+                    'pomer': 'Poměr'
+                },
+                axis=1, inplace=True
+            )
             print(ndf, file=f)
             print(file=f)
 
