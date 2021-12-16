@@ -22,6 +22,9 @@ from matplotlib.ticker import AutoMinorLocator
 import os
 from matplotlib.pyplot import figure
 
+import locale
+locale.setlocale(locale.LC_ALL, 'cs_CZ')
+
 def plot_A1():
     df = pd.read_csv('data_csv/A1-covid_po_mesicich.csv', delimiter=";")
 
@@ -158,7 +161,7 @@ def print_B1(df):
 
     dates = df["datum_zacatek"].unique()
 
-    with open('B1.txt', 'w') as f:
+    with open('B1.txt', 'w', encoding='utf-8') as f:
         for x in dates:
             mask = df['datum_zacatek'] == x
             ndf = df[mask].copy()
