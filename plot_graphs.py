@@ -6,16 +6,16 @@
 # @date: 12/2021
 # Plot graphs from CSV files
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.ticker as mtick
-from matplotlib.ticker import StrMethodFormatter
 import matplotlib.dates as mdates
-import os
+import matplotlib.pyplot as plt
 
+import os
 import locale
+
 locale.setlocale(locale.LC_ALL, 'cs_CZ.utf8')
 
 def get_ouput_path(fname):
@@ -37,7 +37,7 @@ def plot_A1():
     ax.plot(df['zacatek'].to_numpy(), df['testy'].to_numpy(), label='Testy')
 
     ax.set_yscale('log')
-    ax.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
+    ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('{x:.0f}'))
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
@@ -125,7 +125,7 @@ def plot_B1(df):
     ax2.bar(ind - width/2, df['kraj_populace'].to_numpy(), width=width, color='b', align='center', label="počet obyvatel")
     ax2.bar(ind + width/2, df['nakazeni_prirustek'].to_numpy(), width=width, color='r', align='center', label="nakažení")
 
-    ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
+    ax2.yaxis.set_major_formatter(mtick.StrMethodFormatter('{x:.0f}'))
 
     ax2.set_ylim(0, 1600000)
     ax.set_ylim(0.051, 0.119)
