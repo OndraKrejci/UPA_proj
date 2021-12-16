@@ -169,15 +169,17 @@ def print_B1(df, export=False):
 
     if export:
         f = open(get_ouput_path('B1.txt'), 'w', encoding='utf-8')
-    else:
-        f = sys.stdout
 
     for x in dates:
         mask = df['datum_zacatek'] == x
         ndf = df[mask].copy()
         ndf.index = np.arange(0, len(ndf))
         ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
-        print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
+
+        print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"))
+        if export:
+            print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
+
         ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
         ndf.index = np.arange(1, len(ndf)+1)
         ndf.rename({
@@ -188,8 +190,12 @@ def print_B1(df, export=False):
             },
             axis=1, inplace=True
         )
-        print(ndf, file=f)
-        print(file=f)
+        
+        print(ndf)
+        print()
+        if export:
+            print(ndf, file=f)
+            print(file=f)
 
     if export:
         f.close()
@@ -244,7 +250,7 @@ if __name__ == '__main__':
     plot_A1()
     plot_A2()
     plot_B1(df_B1)
-    print_B1(df_B1)
+    print_B1(df_B1, export=True)
     plot_D1()
     plot_D2()
 
