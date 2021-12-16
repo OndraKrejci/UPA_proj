@@ -72,7 +72,11 @@ class InvalidORPCodeDetector():
         with open(fname, 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file, delimiter=';')
             for line in reader:
-                missing_orps[line['orp_name']] = line['orp_code']
+                try:
+                    orp_code = int(line['orp_code'])
+                    missing_orps[line['orp_name']] = orp_code
+                except:
+                    pass
 
         return missing_orps
 
