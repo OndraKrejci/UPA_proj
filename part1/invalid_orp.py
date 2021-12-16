@@ -3,11 +3,12 @@
 # @author Ondřej Krejčí xkrejc69@stud.fit.vutbr.cz
 # Subject: UPA - Data Storage and Preparation
 # @date: 12/2021
-# Invalid ORP code detection
+# Detects unknown ORP codes in MZČR datasets
 
 import json
 import sys
 import csv
+import os
 
 from typing import Union
 
@@ -17,16 +18,16 @@ from .ciselniky import ORP
 class InvalidORPCodeDetector():
     FILES = {
         'obce-nakazeni.json': {
-            'kod': 'orp_kod',
-            'nazev': 'orp_nazev'
+            'code': 'orp_kod',
+            'name': 'orp_nazev'
         },
         'orp-ockovani-geografie.json': {
-            'kod': 'orp_bydliste_kod',
-            'nazev': 'orp_bydliste'
+            'code': 'orp_bydliste_kod',
+            'name': 'orp_bydliste'
         },
         'orp-nakazeni-hospitalizovani.json': {
-            'kod': 'orp_kod',
-            'nazev': 'orp_nazev'
+            'code': 'orp_kod',
+            'name': 'orp_nazev'
         }
     }
 
@@ -36,16 +37,15 @@ class InvalidORPCodeDetector():
         else:
             self.orp_helper = orp
 
-    def get_invalid_orp_set(self, fname: str, code_key: Union[str, None] = None, name_key: Union[str, None] = None) -> set:
-        if code_key is None or name_key is None:
-            if fname in self.FILES:
-                code_key = self.FILES[fname]['kod']
-                name_key = self.FILES[fname]['nazev']
-            else:
-                print('Unknown file name %s' % fname, file=sys.stderr)
-                sys.exit(3)
+    def get_invalid_orp_set(self, fname: str) -> set:
+        if fname in self.FILES:
+            code_key = self.FILES[fname]['code']
+            name_key = self.FILES[fname]['name']
+        else:
+            print('Unknown file name for invalid ORP code detection %s' % fname, file=sys.stderr)
+            sys.exit(3)
 
-        with open('%s/%s' % (DATA_PATH, fname), 'r', encoding='utf-8') as file:
+        with open(os.path.join(DATA_PATH, fname), 'r', encoding='utf-8') as file:
             doc = json.load(file)['data']
 
         missing_orps = set()
@@ -65,7 +65,8 @@ class InvalidORPCodeDetector():
             writer = csv.writer(out_file, delimiter=';')
             writer.writerow(['orp_code', 'orp_name'])
             for orp_name, orp_code in missing_orps:
-                writer.writerow([orp_code, orp_name])
+                if orp_code is not None and orp_name is not None:
+                    writer.writerow([orp_code, orp_name])
 
     def load_invalid_orp_dict(self, fname: str) -> dict:
         missing_orps = {}
@@ -74,15 +75,15 @@ class InvalidORPCodeDetector():
             for line in reader:
                 try:
                     orp_code = int(line['orp_code'])
-                    missing_orps[line['orp_name']] = orp_code
                 except:
-                    pass
+                    continue
+                missing_orps[line['orp_name']] = orp_code
 
         return missing_orps
 
 if __name__ == '__main__':
     detector = InvalidORPCodeDetector()
-    detector.save_invalid_orp_codes('orp-ockovani-geografie.json', '%s/%s' % (DATA_PATH, 'ockovani_invalid_orp.csv'))
+    detector.save_invalid_orp_codes('orp-ockovani-geografie.json', os.path.join(DATA_PATH, 'ockovani_invalid_orp.csv'))
 
     #ORP_NAKAZENI = detector.get_invalid_orp_set('obce-nakazeni.json')
     #ORP_OCKOVANI = detector.get_invalid_orp_set('orp-ockovani-geografie.json')
