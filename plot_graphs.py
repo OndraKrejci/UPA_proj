@@ -14,6 +14,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
 import os
+import sys
 import locale
 
 locale.setlocale(locale.LC_ALL, 'cs_CZ.utf8')
@@ -151,7 +152,7 @@ def plot_B1(df):
 
     #plt.show()
 
-def print_B1(df):
+def print_B1(df, export=False):
     df['pomer'] = df['nakazeni_prirustek'] / df['kraj_populace']
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
@@ -161,25 +162,32 @@ def print_B1(df):
 
     dates = df["datum_zacatek"].unique()
 
-    with open(get_ouput_path('B1.txt'), 'w', encoding='utf-8') as f:
-        for x in dates:
-            mask = df['datum_zacatek'] == x
-            ndf = df[mask].copy()
-            ndf.index = np.arange(0, len(ndf))
-            ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
-            print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
-            ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
-            ndf.index = np.arange(1, len(ndf)+1)
-            ndf.rename({
-                    'kraj_nazev': 'Název kraje',
-                    'kraj_populace': 'Počet obyvatel',
-                    'nakazeni_prirustek': 'Přírůstek nakažených',
-                    'pomer': 'Poměr'
-                },
-                axis=1, inplace=True
-            )
-            print(ndf, file=f)
-            print(file=f)
+    if export:
+        f = open(get_ouput_path('B1.txt'), 'w', encoding='utf-8')
+    else:
+        f = sys.stdout
+
+    for x in dates:
+        mask = df['datum_zacatek'] == x
+        ndf = df[mask].copy()
+        ndf.index = np.arange(0, len(ndf))
+        ndf.sort_values(by=['pomer'], inplace=True, ascending=False)
+        print(pd.to_datetime(str(x)).strftime("%b %Y"), "-", pd.to_datetime(str(ndf['datum_konec'][0])).strftime("%b %Y"), file=f)
+        ndf = ndf[['kraj_nazev', 'kraj_populace', 'nakazeni_prirustek','pomer']]
+        ndf.index = np.arange(1, len(ndf)+1)
+        ndf.rename({
+                'kraj_nazev': 'Název kraje',
+                'kraj_populace': 'Počet obyvatel',
+                'nakazeni_prirustek': 'Přírůstek nakažených',
+                'pomer': 'Poměr'
+            },
+            axis=1, inplace=True
+        )
+        print(ndf, file=f)
+        print(file=f)
+
+    if export:
+        f.close()
 
 def plot_D1():
     df = pd.read_csv('data_csv/D1-zemreli_cr.csv', delimiter=";")
