@@ -5,7 +5,6 @@
 # @date: 11/2021
 # Constants and accessing data from codebooks
 
-
 import csv
 
 from typing import Tuple, Union
