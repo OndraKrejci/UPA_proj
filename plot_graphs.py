@@ -209,7 +209,7 @@ def plot_D1():
     fig = plt.figure(figname, figsize=(10, 6), dpi=150)
     ax = fig.add_subplot(1,1,1)
 
-    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/úmrtí")
+    ax.plot(df['datum_zacatek'].to_numpy(), df['pomer'].to_numpy(), label="Poměr covid úmrtí/celková úmrtí")
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
